@@ -13,5 +13,6 @@ RUN mkdir -p /data
 EXPOSE 3000
 ENV NODE_ENV=production
 ENV DATABASE_URL=file:/data/dev.db
+ENV HOSTNAME=0.0.0.0
 
 CMD ["npm", "start"]
