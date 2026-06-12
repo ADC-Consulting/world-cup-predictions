@@ -8,7 +8,10 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
+RUN mkdir -p /data
+
 EXPOSE 3000
 ENV NODE_ENV=production
+ENV DATABASE_URL=file:/data/dev.db
 
 CMD ["npm", "start"]
