@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db";
+
+export const dynamic = 'force-dynamic';
 import { calculatePoints, scorerPoints } from "@/lib/scoring";
 import Link from "next/link";
 

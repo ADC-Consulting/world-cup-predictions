@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { prisma } from "@/lib/db";
 import { calculatePoints, scorerPoints, POSITION_MULTIPLIER } from "@/lib/scoring";
 import { notFound } from "next/navigation";
