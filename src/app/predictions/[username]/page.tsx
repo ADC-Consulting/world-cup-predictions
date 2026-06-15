@@ -42,7 +42,7 @@ export default async function UserPredictionsPage({
     },
   });
 
-  if (!user || user.isAdmin) notFound();
+  if (!user || user.username === "admin") notFound();
 
   const [matches, predictions, goalEntries] = await Promise.all([
     prisma.match.findMany({
