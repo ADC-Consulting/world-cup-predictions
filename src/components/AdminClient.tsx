@@ -189,10 +189,144 @@ function EntryRow({ entry, saving, onSave, onDelete }: {
   );
 }
 
-export function AdminClient({ matches, initialGoalEntries }: {
+type UserRow = { id: string; name: string; username: string };
+type PredRow = { userId: string; matchId: string; homeScore: number; awayScore: number };
+type ChampRow = { userId: string; teamName: string; teamFlag: string };
+type TopRow = { userId: string; slot: number; playerName: string; position: string };
+
+function PredictionsTable({ matches, users, predictions, championPicks, topScorerPicks }: {
+  matches: Match[];
+  users: UserRow[];
+  predictions: PredRow[];
+  championPicks: ChampRow[];
+  topScorerPicks: TopRow[];
+}) {
+  const [group, setGroup] = useState("all");
+  const groups = ["all", ...Array.from(new Set(matches.map((m) => m.group))).sort()];
+  const visibleMatches = group === "all" ? matches : matches.filter((m) => m.group === group);
+
+  return (
+    <div>
+      {/* Group filter */}
+      <div className="flex gap-1.5 flex-wrap mb-4">
+        {groups.map((g) => (
+          <button key={g} onClick={() => setGroup(g)}
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${group === g ? "bg-amber-500 text-black" : "bg-white/10 text-slate-400 hover:text-white"}`}>
+            {g === "all" ? "All groups" : `Group ${g}`}
+          </button>
+        ))}
+      </div>
+
+      {/* Predictions grid */}
+      <div className="overflow-x-auto rounded-xl border border-white/10">
+        <table className="text-xs w-full min-w-max">
+          <thead>
+            <tr className="border-b border-white/10 bg-white/5">
+              <th className="text-left px-3 py-2 text-slate-400 font-medium sticky left-0 bg-[#0f1629] min-w-40">Match</th>
+              <th className="px-2 py-2 text-slate-400 font-medium min-w-14">Result</th>
+              {users.map((u) => (
+                <th key={u.id} className="px-2 py-2 text-slate-300 font-medium min-w-20 text-center">{u.name}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {visibleMatches.map((m) => {
+              const result = m.homeScore !== null ? `${m.homeScore}–${m.awayScore}` : null;
+              return (
+                <tr key={m.id} className="border-b border-white/5 last:border-0 hover:bg-white/3">
+                  <td className="px-3 py-2 sticky left-0 bg-[#0a0e1a]">
+                    <div className="font-medium text-slate-200">
+                      {m.homeTeam.flag} {m.homeTeam.name} vs {m.awayTeam.name} {m.awayTeam.flag}
+                    </div>
+                    <div className="text-slate-500 text-xs">Gr {m.group} · {new Date(m.scheduledAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</div>
+                  </td>
+                  <td className="px-2 py-2 text-center">
+                    {result ? <span className="text-green-400 font-bold">{result}</span> : <span className="text-slate-600">—</span>}
+                  </td>
+                  {users.map((u) => {
+                    const p = predictions.find((p) => p.userId === u.id && p.matchId === m.id);
+                    if (!p) return <td key={u.id} className="px-2 py-2 text-center text-slate-600">—</td>;
+                    const score = `${p.homeScore}–${p.awayScore}`;
+                    const correct = result && p.homeScore === m.homeScore && p.awayScore === m.awayScore ? "text-green-400" :
+                      result && ((p.homeScore > p.awayScore) === (m.homeScore! > m.awayScore!) || (p.homeScore === p.awayScore) === (m.homeScore === m.awayScore)) ? "text-amber-400" :
+                      result ? "text-red-400" : "text-slate-300";
+                    return <td key={u.id} className={`px-2 py-2 text-center font-mono font-bold ${correct}`}>{score}</td>;
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Champion picks */}
+      <div className="mt-8">
+        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">🏆 Champion Picks</h3>
+        <div className="overflow-x-auto rounded-xl border border-white/10">
+          <table className="text-xs w-full">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/5">
+                <th className="text-left px-3 py-2 text-slate-400">Player</th>
+                <th className="text-left px-3 py-2 text-slate-400">Champion pick</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => {
+                const pick = championPicks.find((c) => c.userId === u.id);
+                return (
+                  <tr key={u.id} className="border-b border-white/5 last:border-0">
+                    <td className="px-3 py-2 font-medium text-slate-200">{u.name}</td>
+                    <td className="px-3 py-2">{pick ? `${pick.teamFlag} ${pick.teamName}` : <span className="text-slate-600">— not picked —</span>}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Top scorer picks */}
+      <div className="mt-6">
+        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">👟 Top 5 Scorer Picks</h3>
+        <div className="overflow-x-auto rounded-xl border border-white/10">
+          <table className="text-xs w-full min-w-max">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/5">
+                <th className="text-left px-3 py-2 text-slate-400">Player</th>
+                {[1,2,3,4,5].map((s) => <th key={s} className="px-3 py-2 text-slate-400 text-center">Pick {s}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => {
+                const picks = topScorerPicks.filter((t) => t.userId === u.id);
+                return (
+                  <tr key={u.id} className="border-b border-white/5 last:border-0">
+                    <td className="px-3 py-2 font-medium text-slate-200">{u.name}</td>
+                    {[1,2,3,4,5].map((s) => {
+                      const p = picks.find((t) => t.slot === s);
+                      const pos = p?.position === "DEFENDER" ? "DEF" : p?.position === "MIDFIELDER" ? "MID" : "FWD";
+                      return <td key={s} className="px-3 py-2 text-center">{p ? <span>{p.playerName} <span className="text-slate-500">{pos}</span></span> : <span className="text-slate-600">—</span>}</td>;
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function AdminClient({ matches, initialGoalEntries, users, predictions, championPicks, topScorerPicks }: {
   matches: Match[];
   initialGoalEntries: GoalEntry[];
+  users: UserRow[];
+  predictions: PredRow[];
+  championPicks: ChampRow[];
+  topScorerPicks: TopRow[];
 }) {
+  const [tab, setTab] = useState<"results" | "predictions">("results");
   const now = new Date();
   const played = matches.filter((m) => m.homeScore !== null);
   const upcoming = matches.filter((m) => m.homeScore === null && new Date(m.scheduledAt) <= now);
@@ -200,28 +334,53 @@ export function AdminClient({ matches, initialGoalEntries }: {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-amber-400 mb-2">Admin — Enter Results</h1>
-      <p className="text-slate-400 text-sm mb-8">{played.length} of {matches.length} matches with results entered</p>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-amber-400">Admin</h1>
+          <p className="text-slate-400 text-sm mt-1">{played.length} of {matches.length} matches with results · {users.length} players</p>
+        </div>
+        <div className="flex rounded-lg overflow-hidden bg-white/5 border border-white/10">
+          <button onClick={() => setTab("results")}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${tab === "results" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"}`}>
+            Enter Results
+          </button>
+          <button onClick={() => setTab("predictions")}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${tab === "predictions" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"}`}>
+            All Predictions
+          </button>
+        </div>
+      </div>
 
-      <TopScorerAdmin initialEntries={initialGoalEntries} />
-
-      {upcoming.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">⏰ Awaiting result ({upcoming.length})</h2>
-          <div className="space-y-1.5">{upcoming.map((m) => <MatchScoreRow key={m.id} match={m} />)}</div>
-        </section>
-      )}
-      {played.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">✅ Results entered ({played.length})</h2>
-          <div className="space-y-1.5">{played.map((m) => <MatchScoreRow key={m.id} match={m} />)}</div>
-        </section>
-      )}
-      {future.length > 0 && (
-        <section>
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">📅 Upcoming ({future.length})</h2>
-          <div className="space-y-1.5">{future.map((m) => <MatchScoreRow key={m.id} match={m} />)}</div>
-        </section>
+      {tab === "results" ? (
+        <>
+          <TopScorerAdmin initialEntries={initialGoalEntries} />
+          {upcoming.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">⏰ Awaiting result ({upcoming.length})</h2>
+              <div className="space-y-1.5">{upcoming.map((m) => <MatchScoreRow key={m.id} match={m} />)}</div>
+            </section>
+          )}
+          {played.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">✅ Results entered ({played.length})</h2>
+              <div className="space-y-1.5">{played.map((m) => <MatchScoreRow key={m.id} match={m} />)}</div>
+            </section>
+          )}
+          {future.length > 0 && (
+            <section>
+              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">📅 Upcoming ({future.length})</h2>
+              <div className="space-y-1.5">{future.map((m) => <MatchScoreRow key={m.id} match={m} />)}</div>
+            </section>
+          )}
+        </>
+      ) : (
+        <PredictionsTable
+          matches={matches}
+          users={users}
+          predictions={predictions}
+          championPicks={championPicks}
+          topScorerPicks={topScorerPicks}
+        />
       )}
     </div>
   );
