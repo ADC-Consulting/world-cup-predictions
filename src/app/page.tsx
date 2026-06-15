@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 export const dynamic = 'force-dynamic';
 import { calculatePoints, scorerPoints } from "@/lib/scoring";
 import Link from "next/link";
+import { Flag } from "@/components/Flag";
 
 async function getLeaderboard() {
   const [users, finishedMatches, predictions, championPicks, topScorerPicks, goalEntries] = await Promise.all([
@@ -111,8 +112,8 @@ export default async function HomePage() {
                       {entry.name}
                     </Link>
                     {entry.championTeam && (
-                      <span className="ml-2 text-xs text-slate-500" title={`Champion: ${entry.championTeam.name}`}>
-                        {entry.championTeam.flag}
+                      <span className="ml-2" title={`Champion: ${entry.championTeam.name}`}>
+                        <Flag flag={entry.championTeam.flag} name={entry.championTeam.name} />
                       </span>
                     )}
                   </td>
@@ -161,7 +162,7 @@ export default async function HomePage() {
             {championOverview.map(({ team, pickers }) => (
               <div key={team.name} className="bg-white/5 border border-white/10 rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">{team.flag}</span>
+                  <Flag flag={team.flag} name={team.name} size="md" />
                   <span className="font-medium text-sm">{team.name}</span>
                 </div>
                 <div className="text-xs text-slate-400 space-y-0.5">

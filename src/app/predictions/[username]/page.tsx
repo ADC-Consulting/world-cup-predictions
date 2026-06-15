@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { calculatePoints, scorerPoints, POSITION_MULTIPLIER } from "@/lib/scoring";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Flag } from "@/components/Flag";
 
 type Team = { name: string; flag: string };
 type MatchRow = {
@@ -121,7 +122,8 @@ export default async function UserPredictionsPage({
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-2 text-sm flex items-center gap-2 mb-3 w-fit">
           <span>🏆</span>
           <span className="text-amber-400 font-semibold">Champion:</span>
-          <span>{user.championPick.team.flag} {user.championPick.team.name}</span>
+          <Flag flag={user.championPick.team.flag} name={user.championPick.team.name} />
+          <span>{user.championPick.team.name}</span>
         </div>
       )}
 
@@ -171,7 +173,7 @@ export default async function UserPredictionsPage({
               {byGroup[group].map((row) => (
                 <div key={row.id} className="flex items-center gap-2 py-2.5 px-4 rounded-xl bg-white/5 text-sm">
                   <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                    <span>{row.homeTeam.flag}</span>
+                    <Flag flag={row.homeTeam.flag} name={row.homeTeam.name} />
                     <span className="truncate font-medium">{row.homeTeam.name}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 text-center">
@@ -186,7 +188,7 @@ export default async function UserPredictionsPage({
                   </div>
                   <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
                     <span className="truncate font-medium text-right">{row.awayTeam.name}</span>
-                    <span>{row.awayTeam.flag}</span>
+                    <Flag flag={row.awayTeam.flag} name={row.awayTeam.name} />
                   </div>
                   <div className="w-20 text-right shrink-0">
                     <PointsBadge points={row.points} />

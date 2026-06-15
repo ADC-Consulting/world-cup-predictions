@@ -1,5 +1,6 @@
 "use client";
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { Flag } from "@/components/Flag";
 
 type Team = { id: string; name: string; group: string; flag: string };
 type Match = {
@@ -89,7 +90,7 @@ function MatchBreakdownModal({ matchId, onClose }: { matchId: string; onClose: (
             <span className="text-slate-400 text-sm">Loading…</span>
           ) : (
             <div className="flex items-center gap-2 font-semibold text-sm">
-              <span>{data.homeTeam.flag}</span>
+              <Flag flag={data.homeTeam.flag} name={data.homeTeam.name} />
               <span>{data.homeTeam.name}</span>
               {data.locked && data.homeScore !== null ? (
                 <span className="text-amber-400 font-bold mx-1">{data.homeScore} – {data.awayScore}</span>
@@ -97,7 +98,7 @@ function MatchBreakdownModal({ matchId, onClose }: { matchId: string; onClose: (
                 <span className="text-slate-500 mx-1">vs</span>
               )}
               <span>{data.awayTeam.name}</span>
-              <span>{data.awayTeam.flag}</span>
+              <Flag flag={data.awayTeam.flag} name={data.awayTeam.name} />
             </div>
           )}
           <button onClick={onClose} className="text-slate-500 hover:text-white text-lg leading-none ml-3">✕</button>
@@ -196,7 +197,7 @@ function MatchRow({ match, showGroup, onSelect }: { match: Match; showGroup?: bo
     return (
       <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-white/5 opacity-70">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-lg">{match.homeTeam.flag}</span>
+          <Flag flag={match.homeTeam.flag} name={match.homeTeam.name} />
           <span className="font-medium text-sm truncate">{match.homeTeam.name}</span>
         </div>
         <div className="flex items-center gap-2 mx-3 text-center shrink-0">
@@ -215,7 +216,7 @@ function MatchRow({ match, showGroup, onSelect }: { match: Match; showGroup?: bo
         </div>
         <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
           <span className="font-medium text-sm truncate text-right">{match.awayTeam.name}</span>
-          <span className="text-lg">{match.awayTeam.flag}</span>
+          <Flag flag={match.awayTeam.flag} name={match.awayTeam.name} />
           {groupBadge}
           {peopleBtn}
         </div>
@@ -226,7 +227,7 @@ function MatchRow({ match, showGroup, onSelect }: { match: Match; showGroup?: bo
   return (
     <div className="flex items-center gap-2 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/8 transition-colors">
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        <span className="text-lg">{match.homeTeam.flag}</span>
+        <Flag flag={match.homeTeam.flag} name={match.homeTeam.name} />
         <span className="font-medium text-sm truncate">{match.homeTeam.name}</span>
       </div>
 
@@ -257,7 +258,7 @@ function MatchRow({ match, showGroup, onSelect }: { match: Match; showGroup?: bo
 
       <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
         <span className="font-medium text-sm truncate text-right">{match.awayTeam.name}</span>
-        <span className="text-lg">{match.awayTeam.flag}</span>
+        <Flag flag={match.awayTeam.flag} name={match.awayTeam.name} />
         {groupBadge}
         {peopleBtn}
       </div>
@@ -363,8 +364,13 @@ export function PredictClient({ grouped, teams, initialChampion, initialTopScore
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-amber-400 font-semibold">🏆 Ultimate Champion</span>
           {bonusLocked ? (
-            <span className="text-slate-300 text-sm">
-              {champion ? teams.find((t) => t.id === champion)?.flag + " " + teams.find((t) => t.id === champion)?.name : "— not picked —"}
+            <span className="text-slate-300 text-sm flex items-center gap-1.5">
+              {champion ? (
+                <>
+                  <Flag flag={teams.find((t) => t.id === champion)!.flag} name={teams.find((t) => t.id === champion)!.name} />
+                  {teams.find((t) => t.id === champion)!.name}
+                </>
+              ) : "— not picked —"}
             </span>
           ) : (
             <>

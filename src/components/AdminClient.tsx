@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Flag } from "@/components/Flag";
 
 type Team = { id: string; name: string; flag: string };
 type Match = {
@@ -45,11 +46,11 @@ function MatchScoreRow({ match }: { match: Match }) {
     <div className={`flex items-center gap-3 py-3 px-4 rounded-xl transition-colors ${played ? "bg-green-500/5 border border-green-500/20" : "bg-white/5"}`}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-base">{match.homeTeam.flag}</span>
+          <Flag flag={match.homeTeam.flag} name={match.homeTeam.name} />
           <span className="font-medium text-sm truncate">{match.homeTeam.name}</span>
           <span className="text-slate-500 text-xs">vs</span>
           <span className="font-medium text-sm truncate">{match.awayTeam.name}</span>
-          <span className="text-base">{match.awayTeam.flag}</span>
+          <Flag flag={match.awayTeam.flag} name={match.awayTeam.name} />
         </div>
         <div className="text-xs text-slate-500 mt-0.5">Group {match.group} · {fmt(match.scheduledAt)}</div>
       </div>
@@ -235,8 +236,10 @@ function PredictionsTable({ matches, users, predictions, championPicks, topScore
               return (
                 <tr key={m.id} className="border-b border-white/5 last:border-0 hover:bg-white/3">
                   <td className="px-3 py-2 sticky left-0 bg-[#0a0e1a]">
-                    <div className="font-medium text-slate-200">
-                      {m.homeTeam.flag} {m.homeTeam.name} vs {m.awayTeam.name} {m.awayTeam.flag}
+                    <div className="font-medium text-slate-200 flex items-center gap-1.5">
+                      <Flag flag={m.homeTeam.flag} name={m.homeTeam.name} />
+                      {m.homeTeam.name} vs {m.awayTeam.name}
+                      <Flag flag={m.awayTeam.flag} name={m.awayTeam.name} />
                     </div>
                     <div className="text-slate-500 text-xs">Gr {m.group} · {new Date(m.scheduledAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</div>
                   </td>
