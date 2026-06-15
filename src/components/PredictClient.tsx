@@ -374,9 +374,9 @@ export function PredictClient({ grouped, teams, initialChampion, initialTopScore
                 className="flex-1 min-w-48 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-400"
               >
                 <option value="">— pick a team —</option>
-                {teams.map((t) => (
+                {[...teams].sort((a, b) => a.name.localeCompare(b.name)).map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.flag} {t.name}
+                    {t.name}
                   </option>
                 ))}
               </select>
