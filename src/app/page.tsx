@@ -4,6 +4,8 @@ export const dynamic = 'force-dynamic';
 import { calculatePoints, scorerPoints } from "@/lib/scoring";
 import Link from "next/link";
 import { Flag } from "@/components/Flag";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 async function getLeaderboard() {
   const [users, finishedMatches, predictions, championPicks, topScorerPicks, goalEntries] = await Promise.all([
@@ -61,12 +63,14 @@ async function getChampionPicksOverview() {
 }
 
 export default async function HomePage() {
-  const [leaderboard, championOverview] = await Promise.all([
+  const [leaderboard, championOverview, session] = await Promise.all([
     getLeaderboard(),
     getChampionPicksOverview(),
+    getServerSession(authOptions),
   ]);
   const finishedCount = await prisma.match.count({ where: { homeScore: { not: null } } });
   const totalMatches = await prisma.match.count();
+  const currentUsername = session?.user?.username;
 
   return (
     <div>
@@ -97,8 +101,10 @@ export default async function HomePage() {
               </tr>
             </thead>
             <tbody>
-              {leaderboard.map((entry, i) => (
-                <tr key={entry.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+              {leaderboard.map((entry, i) => {
+                const isMe = entry.username === currentUsername;
+                return (
+                <tr key={entry.id} className={`border-b border-white/5 last:border-0 transition-colors ${isMe ? "bg-amber-500/10 hover:bg-amber-500/15" : "hover:bg-white/5"}`}>
                   <td className="px-4 py-3 text-slate-500 font-mono text-sm">
                     <div className="flex items-center gap-1.5">
                       <span>{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}</span>
@@ -108,14 +114,19 @@ export default async function HomePage() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/predictions/${entry.username}`} className="font-medium hover:text-amber-400 transition-colors">
-                      {entry.name}
-                    </Link>
-                    {entry.championTeam && (
-                      <span className="ml-2" title={`Champion: ${entry.championTeam.name}`}>
-                        <Flag flag={entry.championTeam.flag} name={entry.championTeam.name} />
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Link href={`/predictions/${entry.username}`} className="font-medium hover:text-amber-400 transition-colors">
+                        {entry.name}
+                      </Link>
+                      {isMe && (
+                        <span className="text-[10px] font-bold uppercase tracking-wide bg-amber-500 text-black px-1.5 py-0.5 rounded">You</span>
+                      )}
+                      {entry.championTeam && (
+                        <span title={`Champion: ${entry.championTeam.name}`}>
+                          <Flag flag={entry.championTeam.flag} name={entry.championTeam.name} />
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-right font-bold text-amber-400 text-lg">
                     {entry.pts % 1 === 0 ? entry.pts : entry.pts.toFixed(1)}
@@ -131,7 +142,8 @@ export default async function HomePage() {
                   <td className="px-4 py-3 text-right text-slate-300 hidden sm:table-cell">{entry.correct}</td>
                   <td className="px-4 py-3 text-right text-slate-500 text-sm hidden md:table-cell">{entry.predicted}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

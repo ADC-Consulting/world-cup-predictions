@@ -176,15 +176,23 @@ export default async function UserPredictionsPage({
                     <Flag flag={row.homeTeam.flag} name={row.homeTeam.name} />
                     <span className="truncate font-medium">{row.homeTeam.name}</span>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 text-center">
-                    {row.predHome !== null ? (
-                      <span className="font-bold w-16 text-center text-slate-300">{row.predHome} – {row.predAway}</span>
-                    ) : (
-                      <span className="w-16 text-center text-slate-600 text-xs">No pick</span>
-                    )}
-                    {row.actualHome !== null && (
-                      <span className="text-xs text-slate-500 w-14 text-center">({row.actualHome}–{row.actualAway})</span>
-                    )}
+                  <div className="flex gap-2 shrink-0">
+                    <div className="text-center w-14">
+                      <div className="text-[10px] text-slate-500 uppercase tracking-wide leading-none mb-0.5">Pick</div>
+                      {row.predHome !== null ? (
+                        <div className="font-bold text-slate-300">{row.predHome}–{row.predAway}</div>
+                      ) : (
+                        <div className="text-slate-600">—</div>
+                      )}
+                    </div>
+                    <div className="text-center w-14">
+                      <div className="text-[10px] text-slate-500 uppercase tracking-wide leading-none mb-0.5">Result</div>
+                      {row.actualHome !== null ? (
+                        <div className="font-bold text-green-400">{row.actualHome}–{row.actualAway}</div>
+                      ) : (
+                        <div className="text-slate-600 text-xs">TBD</div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
                     <span className="truncate font-medium text-right">{row.awayTeam.name}</span>

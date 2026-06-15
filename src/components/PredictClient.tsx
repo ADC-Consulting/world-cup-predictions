@@ -297,10 +297,10 @@ export function PredictClient({ grouped, teams, initialChampion, initialTopScore
       body: JSON.stringify({ topScorerPick: slot }),
     });
     setScorerSaved(slot.slot);
-    setTimeout(() => setScorerSaved(null), 1500);
   }
 
   function updateSlot(slot: number, field: keyof TopScorerSlot, value: string) {
+    setScorerSaved(null);
     setTopScorers((prev) =>
       prev.map((s) => s.slot === slot ? { ...s, [field]: value } : s)
     );
