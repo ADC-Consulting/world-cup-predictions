@@ -330,10 +330,30 @@ export function AdminClient({ matches, initialGoalEntries, users, predictions, c
   topScorerPicks: TopRow[];
 }) {
   const [tab, setTab] = useState<"results" | "predictions">("results");
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState("");
   const now = new Date();
   const played = matches.filter((m) => m.homeScore !== null);
   const upcoming = matches.filter((m) => m.homeScore === null && new Date(m.scheduledAt) <= now);
   const future = matches.filter((m) => m.homeScore === null && new Date(m.scheduledAt) > now);
+
+  async function syncScores() {
+    setSyncing(true);
+    setSyncMsg("");
+    try {
+      const res = await fetch("/api/sync-scores", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncMsg(`✅ ${data.updated} match${data.updated === 1 ? "" : "es"} updated — reload the page to see changes`);
+      } else {
+        setSyncMsg(`❌ ${data.error}`);
+      }
+    } catch {
+      setSyncMsg("❌ Network error");
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   return (
     <div>
@@ -342,17 +362,31 @@ export function AdminClient({ matches, initialGoalEntries, users, predictions, c
           <h1 className="text-3xl font-bold text-amber-400">Admin</h1>
           <p className="text-slate-400 text-sm mt-1">{played.length} of {matches.length} matches with results · {users.length} players</p>
         </div>
-        <div className="flex rounded-lg overflow-hidden bg-white/5 border border-white/10">
-          <button onClick={() => setTab("results")}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${tab === "results" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"}`}>
-            Enter Results
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={syncScores}
+            disabled={syncing}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            {syncing ? "Syncing…" : "⚡ Sync Scores"}
           </button>
-          <button onClick={() => setTab("predictions")}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${tab === "predictions" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"}`}>
-            All Predictions
-          </button>
+          <div className="flex rounded-lg overflow-hidden bg-white/5 border border-white/10">
+            <button onClick={() => setTab("results")}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${tab === "results" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"}`}>
+              Enter Results
+            </button>
+            <button onClick={() => setTab("predictions")}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${tab === "predictions" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"}`}>
+              All Predictions
+            </button>
+          </div>
         </div>
       </div>
+      {syncMsg && (
+        <div className="mb-4 px-4 py-2.5 rounded-xl text-sm bg-white/5 border border-white/10 text-slate-300">
+          {syncMsg}
+        </div>
+      )}
 
       {tab === "results" ? (
         <>

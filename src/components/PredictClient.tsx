@@ -206,7 +206,7 @@ function MatchRow({ match, showGroup, onSelect }: { match: Match; showGroup?: bo
               {match.homeScore} – {match.awayScore}
             </span>
           ) : (
-            <span className="text-xs text-slate-500 w-20 text-center">Locked</span>
+            <span className="text-xs text-slate-500 w-24 text-center">Pending result</span>
           )}
           {match.prediction && (
             <span className="text-xs text-slate-500">
