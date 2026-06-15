@@ -16,7 +16,7 @@ export default async function AdminPage() {
       orderBy: [{ scheduledAt: "asc" }],
     }),
     prisma.scorerGoalEntry.findMany({ orderBy: { goals: "desc" } }),
-    prisma.user.findMany({ where: { isAdmin: false }, orderBy: { name: "asc" } }),
+    prisma.user.findMany({ where: { username: { not: "admin" } }, orderBy: { name: "asc" } }),
     prisma.prediction.findMany(),
     prisma.championPick.findMany({ include: { team: true } }),
     prisma.topScorerPick.findMany({ orderBy: [{ userId: "asc" }, { slot: "asc" }] }),

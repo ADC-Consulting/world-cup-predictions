@@ -9,7 +9,7 @@ import { authOptions } from "@/lib/auth";
 
 async function getLeaderboard() {
   const [users, finishedMatches, predictions, championPicks, topScorerPicks, goalEntries] = await Promise.all([
-    prisma.user.findMany({ where: { isAdmin: false } }),
+    prisma.user.findMany({ where: { username: { not: "admin" } } }),
     prisma.match.findMany({ where: { homeScore: { not: null } } }),
     prisma.prediction.findMany(),
     prisma.championPick.findMany({ include: { team: true } }),
