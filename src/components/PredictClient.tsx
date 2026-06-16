@@ -15,7 +15,7 @@ type Match = {
   prediction: { homeScore: number; awayScore: number } | null;
 };
 
-// Tuesday 16 Jun 2026, 23:59 CEST = 21:59 UTC
+// Tuesday 16 Jun 2026, 17:59 CEST = 15:59 UTC
 const BONUS_LOCK = new Date("2026-06-16T21:59:00Z");
 
 type TopScorerSlot = { slot: number; playerName: string; position: string };
@@ -275,6 +275,7 @@ export function PredictClient({ grouped, teams, initialChampion, initialTopScore
   const [champSaved, setChampSaved] = useState(false);
   const [topScorers, setTopScorers] = useState<TopScorerSlot[]>(initialTopScorers);
   const [scorerSaved, setScorerSaved] = useState<number | null>(null);
+  const [scorerError, setScorerError] = useState<string | null>(null);
   const [view, setView] = useState<"group" | "date">("group");
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const bonusLocked = new Date() >= BONUS_LOCK;
@@ -291,12 +292,18 @@ export function PredictClient({ grouped, teams, initialChampion, initialTopScore
   }
 
   async function saveTopScorer(slot: TopScorerSlot) {
-    await fetch("/api/predictions", {
+    setScorerError(null);
+    const res = await fetch("/api/predictions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ topScorerPick: slot }),
     });
-    setScorerSaved(slot.slot);
+    if (res.ok) {
+      setScorerSaved(slot.slot);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setScorerError(data.error ?? "Failed to save — please try again");
+    }
   }
 
   function updateSlot(slot: number, field: keyof TopScorerSlot, value: string) {
@@ -399,6 +406,11 @@ export function PredictClient({ grouped, teams, initialChampion, initialTopScore
           <span className="text-amber-400 font-semibold">👟 Top 5 Scorers</span>
           {bonusLocked && <span className="text-xs text-red-400">🔒 Locked</span>}
         </div>
+        {scorerError && (
+          <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mb-2">
+            ⚠️ {scorerError}
+          </div>
+        )}
         <div className="space-y-2">
           {topScorers.map((slot) => (
             <div key={slot.slot} className="flex items-center gap-2">

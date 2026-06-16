@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { matchId, homeScore, awayScore, championTeamId, topScorerPick } = body;
 
-  // Bonus picks (champion + top scorer) lock Monday 15 Jun 23:59 CEST (21:59 UTC)
-  const BONUS_LOCK = new Date("2026-06-15T21:59:00Z");
+  // Bonus picks (champion + top scorer) lock Tuesday 16 Jun 23:59 CEST (21:59 UTC)
+  const BONUS_LOCK = new Date("2026-06-16T21:59:00Z");
   const bonusLocked = new Date() >= BONUS_LOCK;
 
   if (championTeamId !== undefined) {

@@ -96,7 +96,7 @@ const matchFixtures = [
   // GROUP D — Australia, Paraguay, Turkey, USA
   ["USA", "Paraguay", "2026-06-13T01:00:00Z"],
   ["Australia", "Turkey", "2026-06-13T04:00:00Z"],
-  ["Turkey", "Paraguay", "2026-06-19T04:00:00Z"],
+  ["Turkey", "Paraguay", "2026-06-19T03:00:00Z"],
   ["USA", "Australia", "2026-06-19T19:00:00Z"],
   ["Turkey", "USA", "2026-06-26T02:00:00Z"],
   ["Paraguay", "Australia", "2026-06-26T02:00:00Z"],
@@ -113,7 +113,7 @@ const matchFixtures = [
   ["Netherlands", "Japan", "2026-06-14T20:00:00Z"],
   ["Sweden", "Tunisia", "2026-06-15T02:00:00Z"],
   ["Netherlands", "Sweden", "2026-06-20T17:00:00Z"],
-  ["Tunisia", "Japan", "2026-06-20T04:00:00Z"],
+  ["Tunisia", "Japan", "2026-06-21T04:00:00Z"],
   ["Tunisia", "Netherlands", "2026-06-25T23:00:00Z"],
   ["Japan", "Sweden", "2026-06-25T23:00:00Z"],
 
@@ -142,7 +142,7 @@ const matchFixtures = [
   ["Senegal", "Iraq", "2026-06-26T19:00:00Z"],
 
   // GROUP J — Algeria, Argentina, Austria, Jordan
-  ["Austria", "Jordan", "2026-06-16T04:00:00Z"],
+  ["Austria", "Jordan", "2026-06-17T04:00:00Z"],
   ["Argentina", "Algeria", "2026-06-17T01:00:00Z"],
   ["Argentina", "Austria", "2026-06-22T17:00:00Z"],
   ["Jordan", "Algeria", "2026-06-23T03:00:00Z"],

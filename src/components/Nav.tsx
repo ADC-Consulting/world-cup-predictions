@@ -74,7 +74,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
           <section>
             <h3 className="font-semibold text-white mb-2">⏰ Bonus pick deadline</h3>
             <p className="text-slate-400 leading-relaxed">
-              Your <strong className="text-slate-300">champion pick</strong> and <strong className="text-slate-300">top 5 scorer picks</strong> must be submitted before <strong className="text-amber-400">Monday 15 June at 23:59</strong> (Dutch time). After that they're locked in — you can't change them.
+              Your <strong className="text-slate-300">champion pick</strong> and <strong className="text-slate-300">top 5 scorer picks</strong> must be submitted before <strong className="text-amber-400">Tuesday 16 June at 23:59</strong> (Dutch time). After that they're locked in — you can't change them.
             </p>
           </section>
 
