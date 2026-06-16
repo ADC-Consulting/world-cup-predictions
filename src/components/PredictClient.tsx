@@ -15,8 +15,8 @@ type Match = {
   prediction: { homeScore: number; awayScore: number } | null;
 };
 
-// Monday 15 Jun 2026, 23:59 CEST = 21:59 UTC
-const BONUS_LOCK = new Date("2026-06-15T21:59:00Z");
+// Tuesday 16 Jun 2026, 23:59 CEST = 21:59 UTC
+const BONUS_LOCK = new Date("2026-06-16T21:59:00Z");
 
 type TopScorerSlot = { slot: number; playerName: string; position: string };
 
@@ -351,11 +351,11 @@ export function PredictClient({ grouped, teams, initialChampion, initialTopScore
       {/* Bonus picks lock notice */}
       {bonusLocked ? (
         <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-2.5 mb-4 text-sm text-red-400">
-          🔒 Champion and top scorer picks are locked (deadline was Mon 15 Jun, 23:59 Dutch time)
+          🔒 Champion and top scorer picks are locked (deadline was Tue 16 Jun, 23:59 Dutch time)
         </div>
       ) : (
         <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 mb-4 text-xs text-slate-400">
-          ⏰ Champion and top scorer picks lock <strong className="text-slate-300">Monday 15 Jun at 23:59</strong> Dutch time
+          ⏰ Champion and top scorer picks lock <strong className="text-slate-300">Tuesday 16 Jun at 23:59</strong> Dutch time
         </div>
       )}
 
@@ -444,7 +444,7 @@ export function PredictClient({ grouped, teams, initialChampion, initialTopScore
           ))}
         </div>
         <p className="text-xs text-slate-400 mt-3">
-          Pts per goal from Mon 15 Jun 23:59 CEST · FWD 0.5× · MID 1× · DEF 1.5×
+          Pts per goal from Tue 16 Jun 23:59 CEST · FWD 0.5× · MID 1× · DEF 1.5×
         </p>
       </div>
 
