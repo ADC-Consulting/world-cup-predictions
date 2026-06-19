@@ -96,7 +96,7 @@ const matchFixtures = [
   // GROUP D — Australia, Paraguay, Turkey, USA
   ["USA", "Paraguay", "2026-06-13T01:00:00Z"],
   ["Australia", "Turkey", "2026-06-13T04:00:00Z"],
-  ["Turkey", "Paraguay", "2026-06-19T03:00:00Z"],
+  ["Turkey", "Paraguay", "2026-06-20T03:00:00Z"],
   ["USA", "Australia", "2026-06-19T19:00:00Z"],
   ["Turkey", "USA", "2026-06-26T02:00:00Z"],
   ["Paraguay", "Australia", "2026-06-26T02:00:00Z"],
