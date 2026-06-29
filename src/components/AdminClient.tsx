@@ -328,6 +328,48 @@ const STAGE_NAMES: Record<string, string> = {
   R32: "Round of 32", R16: "Round of 16", QF: "Quarter-final", SF: "Semi-final", F: "Final",
 };
 
+function SeedKnockoutButton() {
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [msg, setMsg] = useState("");
+
+  const hasR32 = status === "done";
+
+  async function seed() {
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/admin/seed-knockout", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setMsg(`✓ ${data.created} matches added${data.skipped ? `, ${data.skipped} already existed` : ""}. Refresh the Bracket page.`);
+      setStatus("done");
+    } catch (e: any) {
+      setMsg(e.message);
+      setStatus("error");
+    }
+  }
+
+  return (
+    <div className="mb-6 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <div className="text-sm font-semibold text-amber-400">⚔️ Seed all R32 matches</div>
+          <div className="text-xs text-slate-500 mt-0.5">Adds all 16 Round of 32 matches to the database. Safe to run multiple times.</div>
+        </div>
+        <button
+          onClick={seed}
+          disabled={status === "loading" || status === "done"}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-amber-500 text-black hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+        >
+          {status === "loading" ? "Seeding…" : status === "done" ? "Done ✓" : "Seed R32 Matches"}
+        </button>
+      </div>
+      {msg && (
+        <div className={`mt-2 text-xs ${status === "error" ? "text-red-400" : "text-green-400"}`}>{msg}</div>
+      )}
+    </div>
+  );
+}
+
 function AddKnockoutMatch({ teams }: { teams: TeamOption[] }) {
   const [stage, setStage] = useState<string>("R32");
   const [homeId, setHomeId] = useState("");
@@ -469,6 +511,7 @@ export function AdminClient({ matches, initialGoalEntries, teams, users, predict
 
       {tab === "results" ? (
         <>
+          <SeedKnockoutButton />
           <AddKnockoutMatch teams={teams} />
           <TopScorerAdmin initialEntries={initialGoalEntries} />
           {upcoming.length > 0 && (
