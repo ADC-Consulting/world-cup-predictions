@@ -30,7 +30,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
           <section>
             <h3 className="font-semibold text-white mb-2">⚽ Predicting match scores</h3>
             <p className="text-slate-400 leading-relaxed">
-              Go to <strong className="text-slate-300">Predict</strong> and fill in the home and away score for each group stage match.
+              Go to <strong className="text-slate-300">Predict → Group Stage</strong> for group matches or <strong className="text-slate-300">Predict → Knockouts</strong> for the bracket.
               Scores save automatically when you click out of a field — no submit button needed.
               Predictions <strong className="text-slate-300">lock at kick-off</strong>, after that you can only watch.
             </p>
@@ -47,7 +47,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
               <div className="bg-white/5 rounded-lg px-3 py-2 space-y-1">
-                <div className="text-slate-400 text-xs mb-1">⚔️ Knockout — escalating points (exact / result)</div>
+                <div className="text-slate-400 text-xs mb-1">⚔️ Knockouts — escalating points (exact / correct result)</div>
                 <div className="flex flex-wrap gap-1.5 text-xs">
                   <span className="bg-white/5 rounded px-2 py-0.5 text-slate-300">R32: 3/2</span>
                   <span className="bg-white/5 rounded px-2 py-0.5 text-slate-300">R16: 4/3</span>
@@ -66,7 +66,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
               </div>
               <div className="bg-white/5 rounded-lg px-3 py-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-300">👟 Top scorer pick (per goal from Mon 23:59+)</span>
+                  <span className="text-slate-300">👟 Top scorer pick (goals scored from 16 Jun 23:59+)</span>
                   <span className="font-bold text-amber-400 shrink-0 ml-3">× goals</span>
                 </div>
                 <div className="mt-1.5 flex gap-2 text-xs text-slate-500">
@@ -78,32 +78,20 @@ function HelpModal({ onClose }: { onClose: () => void }) {
             </div>
           </section>
 
-          {/* Bonus picks */}
-          <section>
-            <h3 className="font-semibold text-white mb-2">⏰ Bonus pick deadline</h3>
-            <p className="text-slate-400 leading-relaxed">
-              Your <strong className="text-slate-300">champion pick</strong> and <strong className="text-slate-300">top 5 scorer picks</strong> must be submitted before <strong className="text-amber-400">Tuesday 16 June at 23:59</strong> (Dutch time). After that they're locked in — you can't change them.
-            </p>
-          </section>
-
           {/* Tips */}
           <section>
             <h3 className="font-semibold text-white mb-2">💡 Tips</h3>
             <ul className="text-slate-400 space-y-1.5 leading-relaxed">
               <li>• Click any name on the leaderboard to see their full prediction history.</li>
               <li>• Click <strong className="text-slate-300">👥</strong> on any match to see what others predicted — only revealed after kick-off.</li>
-              <li>• Pick a defender or midfielder as top scorer for a bigger multiplier, but they're less likely to score!</li>
+              <li>• Knockout points escalate every round — one great week can flip the entire leaderboard.</li>
             </ul>
           </section>
 
           {/* Prizes */}
           <section className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3">
             <h3 className="font-semibold text-amber-400 mb-1.5">🎁 Prizes</h3>
-            <div className="flex gap-4 text-sm text-slate-300">
-              <span>🥇 🍽️ Dinner voucher</span>
-              <span>🥈 🍾 Salmari bottle</span>
-              <span>🥉 🎂 Cake</span>
-            </div>
+            <p className="text-sm text-slate-400">To be announced — stay tuned 👀</p>
           </section>
         </div>
       </div>
