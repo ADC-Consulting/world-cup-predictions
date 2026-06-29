@@ -77,7 +77,7 @@ export default async function HomePage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-amber-400">🏆 Leaderboard</h1>
         <p className="text-slate-400 text-sm mt-1">
-          {finishedCount} of {totalMatches} group stage matches played
+          {finishedCount} of {totalMatches} matches played
         </p>
       </div>
 
