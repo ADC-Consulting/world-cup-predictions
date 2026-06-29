@@ -472,8 +472,11 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
         <span className="bg-white/5 rounded px-2 py-1 text-slate-600">exact / correct result</span>
       </div>
 
-      <div className="overflow-x-auto pb-6">
-        <div className="flex items-start gap-0" style={{ minWidth: "max-content" }}>
+      <div
+        className="overflow-x-auto pb-6"
+        style={{ width: "100vw", marginLeft: "calc(50% - 50vw)" }}
+      >
+        <div className="flex items-start gap-0 px-6" style={{ minWidth: "max-content" }}>
 
           {/* === LEFT HALF === */}
           <R32Col r32s={left.r32} side="left" />
