@@ -184,15 +184,44 @@ function MatchCard({
   );
 }
 
-function TBDCard({ date, round, slotH }: { date: string; round: string; slotH: number }) {
+function TBDCard({
+  date, round, slotH,
+  team1 = null, team2 = null,
+}: {
+  date: string; round: string; slotH: number;
+  team1?: Team | null; team2?: Team | null;
+}) {
   return (
     <div
-      className="rounded-xl border border-white/5 bg-white/3 w-52 flex flex-col justify-center px-3"
+      className="rounded-xl border border-white/5 bg-white/3 w-52 flex flex-col justify-center"
       style={{ maxHeight: slotH - 8, minHeight: 70 }}
     >
-      <div className="text-[9px] text-amber-400/60 font-semibold uppercase tracking-wider mb-1">{round}</div>
-      <div className="text-xs text-slate-600 font-medium">TBD</div>
-      <div className="text-[9px] text-slate-600 mt-0.5">{fmtShort(date)}</div>
+      <div className="px-2.5 pt-2 text-[9px] text-slate-600">{fmtShort(date)}</div>
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-t border-white/5 mt-1">
+        {team1 ? (
+          <>
+            <span className="text-sm shrink-0">{team1.flag}</span>
+            <span className="text-xs text-slate-400 truncate font-medium">{team1.name}</span>
+            <span className="ml-auto text-[9px] text-green-500/70 shrink-0">advancing</span>
+          </>
+        ) : (
+          <span className="text-xs text-slate-600">TBD</span>
+        )}
+      </div>
+      <div className="flex items-center gap-1.5 px-2.5 pb-1.5 border-t border-white/5">
+        {team2 ? (
+          <>
+            <span className="text-sm shrink-0">{team2.flag}</span>
+            <span className="text-xs text-slate-400 truncate font-medium">{team2.name}</span>
+            <span className="ml-auto text-[9px] text-green-500/70 shrink-0">advancing</span>
+          </>
+        ) : (
+          <span className="text-xs text-slate-600">TBD</span>
+        )}
+      </div>
+      <div className="px-2.5 pb-1.5">
+        <span className="text-[9px] text-amber-400/50 font-semibold uppercase tracking-wider">{round}</span>
+      </div>
     </div>
   );
 }
@@ -255,8 +284,19 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
   const saved = (stage: string) => (id: string, h: number, a: number) =>
     handleSaved(stage, id, h, a);
 
+  // Helper: get the Team object for the winner of a match
+  const winnerTeam = (m: BracketMatch | null): Team | null => {
+    if (!m || m.homeScore === null || m.awayScore === null) return null;
+    if (m.homeScore > m.awayScore) return m.homeTeam;
+    if (m.awayScore > m.homeScore) return m.awayTeam;
+    return null;
+  };
+
   // Resolve bracket slots for left and right halves
   // Each "group" is 2 R32 → 1 R16 → feeds into QF
+  // Returns match (if exists in DB) + advancing teams (shown in TBD slots)
+  type Slot = { match: BracketMatch | null; adv1: Team | null; adv2: Team | null };
+
   const resolveHalf = (
     r32Pairs: [string, string][],
     r16Dates: string[],
@@ -269,23 +309,39 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
     const r32Matches = r32Pairs.map(([h, a]) => r32(h, a));
 
     // R16: winner of pair[0]+pair[1], pair[2]+pair[3], ...
-    const r16 = [0, 1, 2, 3].map((i) => {
-      const w1 = winner(r32Matches[i * 2]);
-      const w2 = winner(r32Matches[i * 2 + 1]);
-      return findMatch(r16Stage, w1, w2);
+    const r16: Slot[] = [0, 1, 2, 3].map((i) => {
+      const m1 = r32Matches[i * 2];
+      const m2 = r32Matches[i * 2 + 1];
+      const w1 = winner(m1);
+      const w2 = winner(m2);
+      return {
+        match: findMatch(r16Stage, w1, w2),
+        adv1: winnerTeam(m1),
+        adv2: winnerTeam(m2),
+      };
     });
 
     // QF: winner of r16[0]+r16[1], r16[2]+r16[3]
-    const qf = [0, 1].map((i) => {
-      const w1 = winner(r16[i * 2]);
-      const w2 = winner(r16[i * 2 + 1]);
-      return findMatch(qfStage, w1, w2);
+    const qf: Slot[] = [0, 1].map((i) => {
+      const s1 = r16[i * 2];
+      const s2 = r16[i * 2 + 1];
+      const w1 = winner(s1.match);
+      const w2 = winner(s2.match);
+      return {
+        match: findMatch(qfStage, w1, w2),
+        adv1: winnerTeam(s1.match),
+        adv2: winnerTeam(s2.match),
+      };
     });
 
     // SF: winner of qf[0]+qf[1]
-    const w1 = winner(qf[0]);
-    const w2 = winner(qf[1]);
-    const sf = findMatch(sfStage, w1, w2);
+    const w1 = winner(qf[0].match);
+    const w2 = winner(qf[1].match);
+    const sf: Slot = {
+      match: findMatch(sfStage, w1, w2),
+      adv1: winnerTeam(qf[0].match),
+      adv2: winnerTeam(qf[1].match),
+    };
 
     return { r32: r32Matches, r16, qf, sf };
   };
@@ -293,31 +349,32 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
   const left = resolveHalf(LEFT_R32, R16_DATES, QF_DATES_LEFT, SF_DATE_LEFT, "R16", "QF", "SF");
   const right = resolveHalf(RIGHT_R32, R16_DATES_RIGHT, QF_DATES_RIGHT, SF_DATE_RIGHT, "R16", "QF", "SF");
 
-  const finalW1 = winner(left.sf);
-  const finalW2 = winner(right.sf);
-  const finalMatch = findMatch("F", finalW1, finalW2);
-  const thirdW1 = left.sf ? (winner(left.sf) === left.sf.homeTeam.name ? left.sf.awayTeam.name : left.sf.homeTeam.name) : null;
-  const thirdW2 = right.sf ? (winner(right.sf) === right.sf.homeTeam.name ? right.sf.awayTeam.name : right.sf.homeTeam.name) : null;
-  const thirdMatch = findMatch("F", thirdW1, thirdW2); // admin likely creates a separate match
+  const finalW1 = winner(left.sf.match);
+  const finalW2 = winner(right.sf.match);
+  const finalSlot: Slot = {
+    match: findMatch("F", finalW1, finalW2),
+    adv1: winnerTeam(left.sf.match),
+    adv2: winnerTeam(right.sf.match),
+  };
 
   const hasR32 = (matches.R32?.length ?? 0) > 0;
 
-  function renderMatchOrTBD(
-    m: BracketMatch | null,
+  function renderSlot(
+    slot: Slot,
     slotH: number,
     tbd_date: string,
     tbd_label: string,
     stage: string,
   ) {
-    return m ? (
-      <MatchCard match={m} slotH={slotH} onSaved={saved(stage)} />
+    return slot.match ? (
+      <MatchCard match={slot.match} slotH={slotH} onSaved={saved(stage)} />
     ) : (
-      <TBDCard date={tbd_date} round={tbd_label} slotH={slotH} />
+      <TBDCard date={tbd_date} round={tbd_label} slotH={slotH} team1={slot.adv1} team2={slot.adv2} />
     );
   }
 
   // Column renderers
-  function R32Col({ r32s, side }: { r32s: (BracketMatch | null)[]; side: "left" | "right" }) {
+  function R32Col({ r32s, side: _side }: { r32s: (BracketMatch | null)[]; side?: string }) {
     return (
       <div className="flex flex-col shrink-0">
         <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-widest text-center mb-2">R32</div>
@@ -336,38 +393,38 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
     );
   }
 
-  function R16Col({ r16s, dates, label }: { r16s: (BracketMatch | null)[]; dates: string[]; label?: string }) {
+  function R16Col({ r16s, dates }: { r16s: Slot[]; dates: string[] }) {
     return (
       <div className="flex flex-col shrink-0">
         <div className="text-[10px] font-semibold text-amber-400/80 uppercase tracking-widest text-center mb-2">R16</div>
-        {r16s.map((m, i) => (
+        {r16s.map((slot, i) => (
           <Slot key={i} h={S * 2}>
-            {renderMatchOrTBD(m, S * 2, dates[i], "R16", "R16")}
+            {renderSlot(slot, S * 2, dates[i], "R16", "R16")}
           </Slot>
         ))}
       </div>
     );
   }
 
-  function QFCol({ qfs, dates }: { qfs: (BracketMatch | null)[]; dates: string[] }) {
+  function QFCol({ qfs, dates }: { qfs: Slot[]; dates: string[] }) {
     return (
       <div className="flex flex-col shrink-0">
         <div className="text-[10px] font-semibold text-amber-400/60 uppercase tracking-widest text-center mb-2">QF</div>
-        {qfs.map((m, i) => (
+        {qfs.map((slot, i) => (
           <Slot key={i} h={S * 4}>
-            {renderMatchOrTBD(m, S * 4, dates[i], "Quarter-final", "QF")}
+            {renderSlot(slot, S * 4, dates[i], "Quarter-final", "QF")}
           </Slot>
         ))}
       </div>
     );
   }
 
-  function SFCol({ sf, date }: { sf: BracketMatch | null; date: string }) {
+  function SFCol({ sf, date }: { sf: Slot; date: string }) {
     return (
       <div className="flex flex-col shrink-0">
         <div className="text-[10px] font-semibold text-amber-400/40 uppercase tracking-widest text-center mb-2">SF</div>
         <Slot h={S * 8}>
-          {renderMatchOrTBD(sf, S * 8, date, "Semi-final", "SF")}
+          {renderSlot(sf, S * 8, date, "Semi-final", "SF")}
         </Slot>
       </div>
     );
@@ -440,9 +497,7 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
             <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-widest text-center mb-2">Final</div>
             <Slot h={S * 16}>
               <div className="flex flex-col items-center gap-3">
-                {renderMatchOrTBD(finalMatch, S * 8, FINAL_DATE, "Final", "F")}
-                <div className="text-[10px] text-slate-600 uppercase tracking-widest">3rd place</div>
-                {renderMatchOrTBD(thirdMatch, S * 4, THIRD_DATE, "3rd place", "F")}
+                {renderSlot(finalSlot, S * 8, FINAL_DATE, "Final", "F")}
               </div>
             </Slot>
           </div>
@@ -460,7 +515,7 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
           <RightArms slots={2} childH={S * 2} />
           <R16Col r16s={right.r16} dates={R16_DATES_RIGHT} />
           <RightArms slots={4} childH={S} />
-          <R32Col r32s={right.r32} side="right" />
+          <R32Col r32s={right.r32} />
         </div>
       </div>
     </div>
