@@ -10,7 +10,7 @@ export default async function AdminPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.isAdmin) redirect("/");
 
-  const [matches, goalEntries, users, predictions, championPicks, topScorerPicks, teams] = await Promise.all([
+  const [matches, goalEntries, users, predictions, championPicks, topScorerPicks] = await Promise.all([
     prisma.match.findMany({
       include: { homeTeam: true, awayTeam: true },
       orderBy: [{ scheduledAt: "asc" }],
@@ -20,7 +20,6 @@ export default async function AdminPage() {
     prisma.prediction.findMany(),
     prisma.championPick.findMany({ include: { team: true } }),
     prisma.topScorerPick.findMany({ orderBy: [{ userId: "asc" }, { slot: "asc" }] }),
-    prisma.team.findMany({ orderBy: [{ group: "asc" }, { name: "asc" }] }),
   ]);
 
   const serialized = matches.map((m) => ({
@@ -34,7 +33,6 @@ export default async function AdminPage() {
     <AdminClient
       matches={serialized}
       initialGoalEntries={goalEntries}
-      teams={teams.map((t) => ({ id: t.id, name: t.name, flag: t.flag }))}
       users={users.map((u) => ({ id: u.id, name: u.name, username: u.username }))}
       predictions={predictions.map((p) => ({ userId: p.userId, matchId: p.matchId, homeScore: p.homeScore, awayScore: p.awayScore }))}
       championPicks={championPicks.map((c) => ({ userId: c.userId, teamName: c.team.name, teamFlag: c.team.flag }))}
