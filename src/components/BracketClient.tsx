@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { calculatePointsForStage, stagePoints } from "@/lib/scoring";
 import { PredictTabs } from "@/components/PredictTabs";
 
@@ -253,6 +253,14 @@ function Slot({ h, children }: { h: number; children: React.ReactNode }) {
 
 export function BracketClient({ byStage }: { byStage: Record<string, BracketMatch[]> }) {
   const [matches, setMatches] = useState(byStage);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    if (maxScroll > 0) el.scrollLeft = maxScroll / 2;
+  }, []);
 
   const handleSaved = useCallback((stage: string, id: string, h: number, a: number) => {
     setMatches((prev) => ({
@@ -473,10 +481,11 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
       </div>
 
       <div
-        className="overflow-x-auto pb-6"
+        ref={scrollRef}
+        className="overflow-x-auto pb-6 flex"
         style={{ width: "100vw", marginLeft: "calc(50% - 50vw)" }}
       >
-        <div className="flex items-start gap-0 px-6" style={{ minWidth: "max-content" }}>
+        <div className="flex items-start gap-0 px-6 mx-auto" style={{ width: "max-content" }}>
 
           {/* === LEFT HALF === */}
           <R32Col r32s={left.r32} side="left" />
