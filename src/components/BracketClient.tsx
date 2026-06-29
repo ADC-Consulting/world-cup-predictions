@@ -112,7 +112,7 @@ function MatchCard({
 
   return (
     <div
-      className={`rounded-xl border text-xs w-52 flex flex-col justify-center ${
+      className={`rounded-xl border text-xs w-52 flex flex-col justify-center overflow-hidden ${
         played
           ? "bg-white/5 border-white/10"
           : match.locked
@@ -167,17 +167,12 @@ function MatchCard({
         )}
       </div>
 
-      {/* Footer */}
-      {(match.prediction || saving || saved) && (
-        <div className="px-2.5 pb-1.5 flex items-center justify-between border-t border-white/5 pt-1">
-          <span className="text-[9px] text-slate-600 truncate">
-            {match.prediction ? `${match.prediction.homeScore}–${match.prediction.awayScore}` : ""}
-          </span>
-          <div className="flex items-center gap-1">
-            {saving && <span className="text-[9px] text-slate-500">…</span>}
-            {saved && <span className="text-[9px] text-green-400">✓</span>}
-            {pts !== null && <PointsBadge pts={pts} stage={match.stage} />}
-          </div>
+      {/* Footer — points badge for played matches, save indicator while saving */}
+      {(pts !== null || saving || saved) && (
+        <div className="px-2.5 pb-1.5 flex items-center justify-end gap-1 border-t border-white/5 pt-1">
+          {saving && <span className="text-[9px] text-slate-500">…</span>}
+          {saved && <span className="text-[9px] text-green-400">✓</span>}
+          {pts !== null && <PointsBadge pts={pts} stage={match.stage} />}
         </div>
       )}
     </div>
