@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
-import { calculatePoints, scorerPoints } from "@/lib/scoring";
+import { calculatePointsForStage, scorerPoints } from "@/lib/scoring";
 import Link from "next/link";
 import { Flag } from "@/components/Flag";
 import { getServerSession } from "next-auth";
@@ -23,7 +23,7 @@ async function getLeaderboard() {
       const pred = predictions.find((p) => p.userId === user.id && p.matchId === match.id);
       if (!pred) continue;
       predicted++;
-      const p = calculatePoints(pred.homeScore, pred.awayScore, match.homeScore!, match.awayScore!);
+      const p = calculatePointsForStage(pred.homeScore, pred.awayScore, match.homeScore!, match.awayScore!, match.stage);
       pts += p;
       if (p === 3) exact++;
       if (p >= 1) correct++;

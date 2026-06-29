@@ -321,9 +321,88 @@ function PredictionsTable({ matches, users, predictions, championPicks, topScore
   );
 }
 
-export function AdminClient({ matches, initialGoalEntries, users, predictions, championPicks, topScorerPicks }: {
+type TeamOption = { id: string; name: string; flag: string };
+
+const KNOCKOUT_STAGES = ["R32", "R16", "QF", "SF", "F"] as const;
+const STAGE_NAMES: Record<string, string> = {
+  R32: "Round of 32", R16: "Round of 16", QF: "Quarter-final", SF: "Semi-final", F: "Final",
+};
+
+function AddKnockoutMatch({ teams }: { teams: TeamOption[] }) {
+  const [stage, setStage] = useState<string>("R32");
+  const [homeId, setHomeId] = useState("");
+  const [awayId, setAwayId] = useState("");
+  const [date, setDate] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  async function submit() {
+    if (!homeId || !awayId || !date) { setMsg("Fill in all fields"); return; }
+    if (homeId === awayId) { setMsg("Home and away must be different teams"); return; }
+    setSaving(true); setMsg("");
+    try {
+      const res = await fetch("/api/matches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage, homeTeamId: homeId, awayTeamId: awayId, scheduledAt: new Date(date).toISOString() }),
+      });
+      if (res.ok) {
+        setMsg("✅ Match added — reload page to see it in the list");
+        setHomeId(""); setAwayId(""); setDate("");
+      } else {
+        const d = await res.json();
+        setMsg(`❌ ${d.error}`);
+      }
+    } finally { setSaving(false); }
+  }
+
+  return (
+    <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-4 mb-8">
+      <p className="text-blue-400 font-semibold mb-1">⚔️ Add Knockout Match</p>
+      <p className="text-xs text-slate-400 mb-4">Add a match to the bracket page. Enter the local Dutch time (CEST = UTC+2).</p>
+      <div className="flex flex-wrap gap-2 items-end">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-slate-500">Round</label>
+          <select value={stage} onChange={(e) => setStage(e.target.value)}
+            className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-amber-400">
+            {KNOCKOUT_STAGES.map((s) => <option key={s} value={s}>{STAGE_NAMES[s]}</option>)}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-slate-500">Home team</label>
+          <select value={homeId} onChange={(e) => setHomeId(e.target.value)}
+            className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-amber-400 min-w-44">
+            <option value="">— select —</option>
+            {teams.map((t) => <option key={t.id} value={t.id}>{t.flag} {t.name}</option>)}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-slate-500">Away team</label>
+          <select value={awayId} onChange={(e) => setAwayId(e.target.value)}
+            className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-amber-400 min-w-44">
+            <option value="">— select —</option>
+            {teams.map((t) => <option key={t.id} value={t.id}>{t.flag} {t.name}</option>)}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-slate-500">Date &amp; time (local)</label>
+          <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)}
+            className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-amber-400" />
+        </div>
+        <button onClick={submit} disabled={saving}
+          className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors self-end">
+          {saving ? "…" : "+ Add"}
+        </button>
+      </div>
+      {msg && <p className="mt-2 text-xs text-slate-300">{msg}</p>}
+    </div>
+  );
+}
+
+export function AdminClient({ matches, initialGoalEntries, teams, users, predictions, championPicks, topScorerPicks }: {
   matches: Match[];
   initialGoalEntries: GoalEntry[];
+  teams: TeamOption[];
   users: UserRow[];
   predictions: PredRow[];
   championPicks: ChampRow[];
@@ -390,6 +469,7 @@ export function AdminClient({ matches, initialGoalEntries, users, predictions, c
 
       {tab === "results" ? (
         <>
+          <AddKnockoutMatch teams={teams} />
           <TopScorerAdmin initialEntries={initialGoalEntries} />
           {upcoming.length > 0 && (
             <section className="mb-8">

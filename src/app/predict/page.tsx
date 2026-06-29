@@ -12,6 +12,7 @@ export default async function PredictPage() {
 
   const [matches, predictions, champion, topScorerPicks, teams] = await Promise.all([
     prisma.match.findMany({
+      where: { stage: "group" },
       include: { homeTeam: true, awayTeam: true },
       orderBy: [{ group: "asc" }, { scheduledAt: "asc" }],
     }),

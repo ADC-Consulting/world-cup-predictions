@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { prisma } from "@/lib/db";
-import { calculatePoints, scorerPoints, POSITION_MULTIPLIER } from "@/lib/scoring";
+import { calculatePointsForStage, scorerPoints, POSITION_MULTIPLIER, stagePoints } from "@/lib/scoring";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Flag } from "@/components/Flag";
@@ -10,6 +10,7 @@ type Team = { name: string; flag: string };
 type MatchRow = {
   id: string;
   group: string;
+  stage: string;
   scheduledAt: string;
   homeTeam: Team;
   awayTeam: Team;
@@ -20,10 +21,11 @@ type MatchRow = {
   points: number | null;
 };
 
-function PointsBadge({ points }: { points: number | null }) {
+function PointsBadge({ points, stage }: { points: number | null; stage: string }) {
   if (points === null) return <span className="text-xs text-slate-600 bg-white/5 rounded px-2 py-0.5">—</span>;
-  if (points === 3) return <span className="text-xs text-green-400 bg-green-500/15 border border-green-500/30 rounded px-2 py-0.5 font-semibold">+3 Exact</span>;
-  if (points === 2) return <span className="text-xs text-amber-400 bg-amber-500/15 border border-amber-500/30 rounded px-2 py-0.5 font-semibold">+2 Result</span>;
+  const { exact } = stagePoints(stage);
+  if (points === exact) return <span className="text-xs text-green-400 bg-green-500/15 border border-green-500/30 rounded px-2 py-0.5 font-semibold">+{points} Exact</span>;
+  if (points > 0) return <span className="text-xs text-amber-400 bg-amber-500/15 border border-amber-500/30 rounded px-2 py-0.5 font-semibold">+{points} Result</span>;
   return <span className="text-xs text-red-400 bg-red-500/15 border border-red-500/30 rounded px-2 py-0.5 font-semibold">0 Miss</span>;
 }
 
@@ -66,6 +68,7 @@ export default async function UserPredictionsPage({
     return {
       id: m.id,
       group: m.group,
+      stage: m.stage,
       scheduledAt: m.scheduledAt.toISOString(),
       homeTeam: m.homeTeam,
       awayTeam: m.awayTeam,
@@ -74,7 +77,7 @@ export default async function UserPredictionsPage({
       predHome: locked ? (pred?.homeScore ?? null) : null,
       predAway: locked ? (pred?.awayScore ?? null) : null,
       points: played && pred
-        ? calculatePoints(pred.homeScore, pred.awayScore, m.homeScore!, m.awayScore!)
+        ? calculatePointsForStage(pred.homeScore, pred.awayScore, m.homeScore!, m.awayScore!, m.stage)
         : null,
     };
   });
@@ -199,7 +202,7 @@ export default async function UserPredictionsPage({
                     <Flag flag={row.awayTeam.flag} name={row.awayTeam.name} />
                   </div>
                   <div className="w-20 text-right shrink-0">
-                    <PointsBadge points={row.points} />
+                    <PointsBadge points={row.points} stage={row.stage} />
                   </div>
                 </div>
               ))}

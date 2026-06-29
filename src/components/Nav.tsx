@@ -40,16 +40,24 @@ function HelpModal({ onClose }: { onClose: () => void }) {
           <section>
             <h3 className="font-semibold text-white mb-3">🏅 Scoring</h3>
             <div className="space-y-2">
-              <div className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2">
-                <span className="text-slate-300">⚽ Exact score (e.g. 2–1 predicted & 2–1 played)</span>
-                <span className="font-bold text-amber-400 shrink-0 ml-3">3 pts</span>
+              <div className="bg-white/5 rounded-lg px-3 py-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300">⚽ Group stage — exact / correct result</span>
+                  <span className="font-bold text-amber-400 shrink-0 ml-3">3 / 2</span>
+                </div>
+              </div>
+              <div className="bg-white/5 rounded-lg px-3 py-2 space-y-1">
+                <div className="text-slate-400 text-xs mb-1">⚔️ Knockout — escalating points (exact / result)</div>
+                <div className="flex flex-wrap gap-1.5 text-xs">
+                  <span className="bg-white/5 rounded px-2 py-0.5 text-slate-300">R32: 3/2</span>
+                  <span className="bg-white/5 rounded px-2 py-0.5 text-slate-300">R16: 4/3</span>
+                  <span className="bg-white/5 rounded px-2 py-0.5 text-slate-300">QF: 6/4</span>
+                  <span className="bg-white/5 rounded px-2 py-0.5 text-slate-300">SF: 8/6</span>
+                  <span className="bg-white/5 rounded px-2 py-0.5 text-amber-400">Final: 12/8</span>
+                </div>
               </div>
               <div className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2">
-                <span className="text-slate-300">✓ Correct result (right winner or draw)</span>
-                <span className="font-bold text-slate-300 shrink-0 ml-3">2 pts</span>
-              </div>
-              <div className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2">
-                <span className="text-slate-300">✗ Wrong result</span>
+                <span className="text-slate-300">✗ Wrong result (any stage)</span>
                 <span className="font-bold text-red-400 shrink-0 ml-3">0 pts</span>
               </div>
               <div className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2">
@@ -132,6 +140,7 @@ export function Nav() {
         <div className="flex items-center gap-1">
           {link("/", "Leaderboard")}
           {session && link("/predict", "Predict")}
+          {session && link("/bracket", "Bracket")}
           {session?.user?.isAdmin && link("/admin", "Admin")}
           <button
             onClick={() => setHelpOpen(true)}
