@@ -202,7 +202,6 @@ function TBDCard({
           <>
             <span className="text-sm shrink-0">{team1.flag}</span>
             <span className="text-xs text-slate-400 truncate font-medium">{team1.name}</span>
-            <span className="ml-auto text-[9px] text-green-500/70 shrink-0">advancing</span>
           </>
         ) : (
           <span className="text-xs text-slate-600">TBD</span>
@@ -213,7 +212,6 @@ function TBDCard({
           <>
             <span className="text-sm shrink-0">{team2.flag}</span>
             <span className="text-xs text-slate-400 truncate font-medium">{team2.name}</span>
-            <span className="ml-auto text-[9px] text-green-500/70 shrink-0">advancing</span>
           </>
         ) : (
           <span className="text-xs text-slate-600">TBD</span>
