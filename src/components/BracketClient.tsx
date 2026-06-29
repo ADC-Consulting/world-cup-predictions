@@ -1,6 +1,7 @@
 "use client";
 import { useState, useCallback } from "react";
 import { calculatePointsForStage, stagePoints } from "@/lib/scoring";
+import { PredictTabs } from "@/components/PredictTabs";
 
 type Team = { id: string; name: string; flag: string };
 type BracketMatch = {
@@ -400,8 +401,9 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
 
   return (
     <div>
+      <PredictTabs />
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-amber-400">⚔️ Knockout Stage</h1>
+        <h1 className="text-3xl font-bold text-amber-400">⚔️ Knockouts</h1>
         <p className="text-slate-400 text-sm mt-1">Predict scores for each match — locks at kick-off. Points escalate each round.</p>
       </div>
 

@@ -116,11 +116,11 @@ export function Nav() {
   const path = usePathname();
   const [helpOpen, setHelpOpen] = useState(false);
 
-  const link = (href: string, label: string) => (
+  const link = (href: string, label: string, matchPrefix?: string) => (
     <Link
       href={href}
       className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-        path === href
+        (matchPrefix ? path.startsWith(matchPrefix) : path === href)
           ? "bg-amber-500 text-black"
           : "text-slate-300 hover:text-white hover:bg-white/10"
       }`}
@@ -139,8 +139,7 @@ export function Nav() {
         </Link>
         <div className="flex items-center gap-1">
           {link("/", "Leaderboard")}
-          {session && link("/predict", "Predict")}
-          {session && link("/bracket", "Bracket")}
+          {session && link("/predict", "Predict", "/predict")}
           {session?.user?.isAdmin && link("/admin", "Admin")}
           <button
             onClick={() => setHelpOpen(true)}

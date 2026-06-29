@@ -1,6 +1,7 @@
 "use client";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Flag } from "@/components/Flag";
+import { PredictTabs } from "@/components/PredictTabs";
 
 type Team = { id: string; name: string; group: string; flag: string };
 type Match = {
@@ -333,8 +334,9 @@ export function PredictClient({ grouped, teams, initialChampion, initialTopScore
 
   return (
     <div>
+      <PredictTabs />
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="text-3xl font-bold text-amber-400">⚽ Your Predictions</h1>
+        <h1 className="text-3xl font-bold text-amber-400">⚽ Group Stage</h1>
         <div className="flex rounded-lg overflow-hidden bg-white/5 border border-white/10">
           <button
             onClick={() => setView("group")}
