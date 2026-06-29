@@ -139,7 +139,7 @@ export function Nav() {
         </Link>
         <div className="flex items-center gap-1">
           {link("/", "Leaderboard")}
-          {session && link("/predict", "Predict", "/predict")}
+          {session && link("/predict/knockouts", "Predict", "/predict")}
           {session?.user?.isAdmin && link("/admin", "Admin")}
           <button
             onClick={() => setHelpOpen(true)}
