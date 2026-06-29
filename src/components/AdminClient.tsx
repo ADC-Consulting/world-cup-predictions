@@ -191,6 +191,66 @@ function EntryRow({ entry, saving, onSave, onDelete }: {
 }
 
 type UserRow = { id: string; name: string; username: string };
+
+function UserResetRow({ user }: { user: UserRow }) {
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [resetUrl, setResetUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  async function generate() {
+    setStatus("loading"); setResetUrl("");
+    try {
+      const res = await fetch("/api/admin/generate-reset-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setResetUrl(data.resetUrl);
+      setStatus("done");
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  async function copy() {
+    await navigator.clipboard.writeText(resetUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="flex flex-col gap-2 py-3 px-4 rounded-xl bg-white/5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <span className="font-medium text-sm text-slate-200">{user.name}</span>
+          <span className="ml-2 text-xs text-slate-500">@{user.username}</span>
+        </div>
+        <button
+          onClick={generate}
+          disabled={status === "loading"}
+          className="px-3 py-1.5 text-xs font-medium bg-white/10 hover:bg-white/20 disabled:opacity-40 text-slate-300 rounded-lg transition-colors shrink-0"
+        >
+          {status === "loading" ? "Generating…" : "🔑 Generate reset link"}
+        </button>
+      </div>
+      {status === "done" && resetUrl && (
+        <div className="flex items-center gap-2 bg-black/30 rounded-lg px-3 py-2">
+          <span className="text-xs text-slate-400 truncate flex-1 font-mono">{resetUrl}</span>
+          <button
+            onClick={copy}
+            className="px-2 py-1 text-xs bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded transition-colors shrink-0"
+          >
+            {copied ? "Copied ✓" : "Copy"}
+          </button>
+        </div>
+      )}
+      {status === "done" && <p className="text-[10px] text-slate-600">Expires in 1 hour · single use</p>}
+      {status === "error" && <p className="text-xs text-red-400">Failed to generate link</p>}
+    </div>
+  );
+}
 type PredRow = { userId: string; matchId: string; homeScore: number; awayScore: number };
 type ChampRow = { userId: string; teamName: string; teamFlag: string };
 type TopRow = { userId: string; slot: number; playerName: string; position: string };
@@ -371,7 +431,7 @@ export function AdminClient({ matches, initialGoalEntries, users, predictions, c
   championPicks: ChampRow[];
   topScorerPicks: TopRow[];
 }) {
-  const [tab, setTab] = useState<"results" | "predictions">("results");
+  const [tab, setTab] = useState<"results" | "predictions" | "users">("results");
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
   const now = new Date();
@@ -421,6 +481,10 @@ export function AdminClient({ matches, initialGoalEntries, users, predictions, c
               className={`px-4 py-2 text-sm font-medium transition-colors ${tab === "predictions" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"}`}>
               All Predictions
             </button>
+            <button onClick={() => setTab("users")}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${tab === "users" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"}`}>
+              Users
+            </button>
           </div>
         </div>
       </div>
@@ -453,6 +517,14 @@ export function AdminClient({ matches, initialGoalEntries, users, predictions, c
             </section>
           )}
         </>
+      ) : tab === "users" ? (
+        <div>
+          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">🔑 Password Reset</h2>
+          <p className="text-xs text-slate-500 mb-4">Generate a one-time reset link and share it with the user (e.g. via Slack). Link expires after 1 hour.</p>
+          <div className="space-y-2">
+            {users.map((u) => <UserResetRow key={u.id} user={u} />)}
+          </div>
+        </div>
       ) : (
         <PredictionsTable
           matches={matches}
