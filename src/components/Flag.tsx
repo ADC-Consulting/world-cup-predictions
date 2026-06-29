@@ -1,3 +1,6 @@
+"use client";
+import { useState } from "react";
+
 // Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿 and England 🏴󠁧󠁢󠁥󠁮󠁧󠁿 use tag-sequence flags, not regional indicators.
 const SPECIAL_FLAGS: Record<string, string> = {
   "🏴󠁧󠁢󠁳󠁣󠁴󠁿": "gb-sct",
@@ -21,6 +24,12 @@ export function Flag({
   name: string;
   size?: "sm" | "md" | "lg";
 }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return <span className="text-base leading-none">{flag}</span>;
+  }
+
   const iso = emojiToISO(flag);
   const dims: Record<string, [number, number]> = {
     sm: [20, 15],
@@ -36,6 +45,7 @@ export function Flag({
       height={h}
       alt={name}
       className="inline-block rounded-sm"
+      onError={() => setFailed(true)}
     />
   );
 }
