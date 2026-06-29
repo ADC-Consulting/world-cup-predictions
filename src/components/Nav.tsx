@@ -132,7 +132,7 @@ export function Nav() {
   return (
     <>
     <nav className="border-b border-white/10 bg-[#0a0e1a]/90 backdrop-blur sticky top-0 z-50">
-      <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+      <div className="max-w-screen-2xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-amber-400 text-lg shrink-0">
           🏆 <span className="hidden sm:inline">ADC World Cup 2026</span>
           <span className="sm:hidden">WC 2026</span>
