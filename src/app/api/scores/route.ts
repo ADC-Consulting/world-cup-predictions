@@ -18,37 +18,42 @@ export async function POST(req: NextRequest) {
     include: { homeTeam: true, awayTeam: true },
   });
 
-  // Auto-advance winner to the next round
   const advanced = await advanceWinner(match);
-
   return NextResponse.json({ match, advanced });
 }
 
-type MatchWithTeams = Awaited<ReturnType<typeof prisma.match.update>> & {
+type MatchWithTeams = {
+  id: string;
+  stage: string;
+  scheduledAt: Date;
+  homeScore: number | null;
+  awayScore: number | null;
+  homeTeamId: string;
+  awayTeamId: string;
+  penaltyWinnerId: string | null;
   homeTeam: { id: string; name: string };
   awayTeam: { id: string; name: string };
 };
 
-async function advanceWinner(match: MatchWithTeams) {
-  // Only apply to knockout stages
+export async function advanceWinner(match: MatchWithTeams) {
   if (!["R32", "R16", "QF", "SF"].includes(match.stage)) return null;
   if (match.homeScore === null || match.awayScore === null) return null;
 
   const matchTime = match.scheduledAt.toISOString();
-
-  // Find the bracket path this match belongs to
-  const path = BRACKET_PATHS.find(
-    (p) => p.m1 === matchTime || p.m2 === matchTime
-  );
+  const path = BRACKET_PATHS.find((p) => p.m1 === matchTime || p.m2 === matchTime);
   if (!path) return null;
 
-  // Get winner team ID
-  const winnerId =
-    match.homeScore > match.awayScore
-      ? match.homeTeamId
-      : match.awayTeamId;
+  // Determine this match's winner — draws require penaltyWinnerId
+  let winnerId: string;
+  if (match.homeScore > match.awayScore) {
+    winnerId = match.homeTeamId;
+  } else if (match.awayScore > match.homeScore) {
+    winnerId = match.awayTeamId;
+  } else {
+    if (!match.penaltyWinnerId) return { status: "draw_needs_penalty_winner" };
+    winnerId = match.penaltyWinnerId;
+  }
 
-  // Find the partner match (the other feeder in the same path)
   const partnerTime = path.m1 === matchTime ? path.m2 : path.m1;
   const isM1 = path.m1 === matchTime;
 
@@ -57,27 +62,39 @@ async function advanceWinner(match: MatchWithTeams) {
     include: { homeTeam: true, awayTeam: true },
   });
 
-  // If partner hasn't been played yet, nothing to create
   if (!partnerMatch || partnerMatch.homeScore === null || partnerMatch.awayScore === null) {
     return { status: "waiting_for_partner" };
   }
 
-  const partnerWinnerId =
-    partnerMatch.homeScore > partnerMatch.awayScore
-      ? partnerMatch.homeTeamId
-      : partnerMatch.awayTeamId;
+  // Determine partner's winner
+  let partnerWinnerId: string;
+  if (partnerMatch.homeScore > partnerMatch.awayScore) {
+    partnerWinnerId = partnerMatch.homeTeamId;
+  } else if (partnerMatch.awayScore > partnerMatch.homeScore) {
+    partnerWinnerId = partnerMatch.awayTeamId;
+  } else {
+    if (!partnerMatch.penaltyWinnerId) return { status: "partner_draw_needs_penalty_winner" };
+    partnerWinnerId = partnerMatch.penaltyWinnerId;
+  }
 
-  // Determine home/away: m1 winner = home, m2 winner = away
   const homeTeamId = isM1 ? winnerId : partnerWinnerId;
   const awayTeamId = isM1 ? partnerWinnerId : winnerId;
 
-  // Check if next match already exists (manually added or previously auto-created)
   const existing = await prisma.match.findFirst({
     where: { scheduledAt: new Date(path.next), stage: path.nextStage },
   });
-  if (existing) return { status: "already_exists", matchId: existing.id };
+  if (existing) {
+    // Update teams if needed (re-running after a correction)
+    if (existing.homeTeamId !== homeTeamId || existing.awayTeamId !== awayTeamId) {
+      await prisma.match.update({
+        where: { id: existing.id },
+        data: { homeTeamId, awayTeamId },
+      });
+      return { status: "updated", matchId: existing.id };
+    }
+    return { status: "already_exists", matchId: existing.id };
+  }
 
-  // Auto-create the next round match
   const nextMatch = await prisma.match.create({
     data: {
       stage: path.nextStage,

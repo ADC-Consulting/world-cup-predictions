@@ -2,13 +2,17 @@
 import { useState } from "react";
 import { Flag } from "@/components/Flag";
 
+const KNOCKOUT_STAGES = ["R32", "R16", "QF", "SF", "F"];
+
 type Team = { id: string; name: string; flag: string };
 type Match = {
   id: string;
   group: string;
+  stage: string;
   scheduledAt: string;
   homeScore: number | null;
   awayScore: number | null;
+  penaltyWinnerId: string | null;
   homeTeam: Team;
   awayTeam: Team;
 };
@@ -26,6 +30,8 @@ function MatchScoreRow({ match }: { match: Match }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [penaltyWinnerId, setPenaltyWinnerId] = useState<string | null>(match.penaltyWinnerId);
+  const [savingPenalty, setSavingPenalty] = useState(false);
 
   async function save() {
     if (home === "" || away === "") return;
@@ -41,31 +47,73 @@ function MatchScoreRow({ match }: { match: Match }) {
     } finally { setSaving(false); }
   }
 
+  async function pickAdvancing(teamId: string) {
+    setSavingPenalty(true);
+    try {
+      await fetch("/api/admin/set-penalty-winner", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ matchId: match.id, teamId }),
+      });
+      setPenaltyWinnerId(teamId);
+    } finally { setSavingPenalty(false); }
+  }
+
   const played = match.homeScore !== null;
+  const isKnockout = KNOCKOUT_STAGES.includes(match.stage);
+  const currentHome = home !== "" ? +home : match.homeScore;
+  const currentAway = away !== "" ? +away : match.awayScore;
+  const isDraw = currentHome !== null && currentAway !== null && currentHome === currentAway;
+  const showAdvancePicker = isKnockout && played && isDraw;
+
   return (
-    <div className={`flex items-center gap-3 py-3 px-4 rounded-xl transition-colors ${played ? "bg-green-500/5 border border-green-500/20" : "bg-white/5"}`}>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <Flag flag={match.homeTeam.flag} name={match.homeTeam.name} />
-          <span className="font-medium text-sm truncate">{match.homeTeam.name}</span>
-          <span className="text-slate-500 text-xs">vs</span>
-          <span className="font-medium text-sm truncate">{match.awayTeam.name}</span>
-          <Flag flag={match.awayTeam.flag} name={match.awayTeam.name} />
+    <div className={`py-3 px-4 rounded-xl transition-colors ${played ? "bg-green-500/5 border border-green-500/20" : "bg-white/5"}`}>
+      <div className="flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <Flag flag={match.homeTeam.flag} name={match.homeTeam.name} />
+            <span className="font-medium text-sm truncate">{match.homeTeam.name}</span>
+            <span className="text-slate-500 text-xs">vs</span>
+            <span className="font-medium text-sm truncate">{match.awayTeam.name}</span>
+            <Flag flag={match.awayTeam.flag} name={match.awayTeam.name} />
+          </div>
+          <div className="text-xs text-slate-500 mt-0.5">{match.stage} · {fmt(match.scheduledAt)}</div>
         </div>
-        <div className="text-xs text-slate-500 mt-0.5">Group {match.group} · {fmt(match.scheduledAt)}</div>
+        <div className="flex items-center gap-2 shrink-0">
+          <input type="number" min={0} max={20} value={home} onChange={(e) => setHome(e.target.value)}
+            className="w-12 text-center bg-white/10 border border-white/20 rounded-lg py-1.5 text-sm font-bold outline-none focus:border-amber-400 transition-colors" />
+          <span className="text-slate-500">–</span>
+          <input type="number" min={0} max={20} value={away} onChange={(e) => setAway(e.target.value)}
+            className="w-12 text-center bg-white/10 border border-white/20 rounded-lg py-1.5 text-sm font-bold outline-none focus:border-amber-400 transition-colors" />
+          <button onClick={save} disabled={saving || home === "" || away === ""}
+            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black text-xs font-semibold rounded-lg transition-colors">
+            {saving ? "..." : "Save"}
+          </button>
+          <span className="text-sm w-4">{saved ? "✅" : error ? "❌" : played ? "✓" : ""}</span>
+        </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <input type="number" min={0} max={20} value={home} onChange={(e) => setHome(e.target.value)}
-          className="w-12 text-center bg-white/10 border border-white/20 rounded-lg py-1.5 text-sm font-bold outline-none focus:border-amber-400 transition-colors" />
-        <span className="text-slate-500">–</span>
-        <input type="number" min={0} max={20} value={away} onChange={(e) => setAway(e.target.value)}
-          className="w-12 text-center bg-white/10 border border-white/20 rounded-lg py-1.5 text-sm font-bold outline-none focus:border-amber-400 transition-colors" />
-        <button onClick={save} disabled={saving || home === "" || away === ""}
-          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black text-xs font-semibold rounded-lg transition-colors">
-          {saving ? "..." : "Save"}
-        </button>
-        <span className="text-sm w-4">{saved ? "✅" : error ? "❌" : played ? "✓" : ""}</span>
-      </div>
+
+      {showAdvancePicker && (
+        <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-slate-400">Draw — who advances?</span>
+          {[match.homeTeam, match.awayTeam].map((team) => (
+            <button
+              key={team.id}
+              onClick={() => pickAdvancing(team.id)}
+              disabled={savingPenalty}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors border ${
+                penaltyWinnerId === team.id
+                  ? "bg-amber-500 border-amber-500 text-black"
+                  : "bg-white/5 border-white/15 text-slate-300 hover:border-amber-400 hover:text-amber-400"
+              }`}
+            >
+              <span>{team.flag}</span>
+              <span>{team.name}</span>
+              {penaltyWinnerId === team.id && <span>✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

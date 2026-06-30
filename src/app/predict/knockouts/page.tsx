@@ -30,6 +30,7 @@ export default async function KnockoutsPage() {
     homeTeam: { id: m.homeTeam.id, name: m.homeTeam.name, flag: m.homeTeam.flag },
     awayTeam: { id: m.awayTeam.id, name: m.awayTeam.name, flag: m.awayTeam.flag },
     locked: new Date(m.scheduledAt) <= new Date(),
+    penaltyWinnerId: m.penaltyWinnerId,
     prediction: predictions.find((p) => p.matchId === m.id)
       ? { homeScore: predictions.find((p) => p.matchId === m.id)!.homeScore, awayScore: predictions.find((p) => p.matchId === m.id)!.awayScore }
       : null,

@@ -59,21 +59,24 @@ model Team {
   flag            String
   homeMatches     Match[]        @relation("HomeTeam")
   awayMatches     Match[]        @relation("AwayTeam")
+  penaltyWins     Match[]        @relation("PenaltyWinner")
   championPicks   ChampionPick[]
 }
 
 model Match {
-  id              String         @id @default(cuid())
-  homeTeamId      String
-  awayTeamId      String
-  group           String
-  stage           String         @default("group")
-  scheduledAt     DateTime
-  homeScore       Int?
-  awayScore       Int?
-  homeTeam        Team           @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeam        Team           @relation("AwayTeam", fields: [awayTeamId], references: [id])
-  predictions     Prediction[]
+  id                String         @id @default(cuid())
+  homeTeamId        String
+  awayTeamId        String
+  group             String
+  stage             String         @default("group")
+  scheduledAt       DateTime
+  homeScore         Int?
+  awayScore         Int?
+  penaltyWinnerId   String?
+  homeTeam          Team           @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam          Team           @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  penaltyWinner     Team?          @relation("PenaltyWinner", fields: [penaltyWinnerId], references: [id])
+  predictions       Prediction[]
 }
 
 model Prediction {

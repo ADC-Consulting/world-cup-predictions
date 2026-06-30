@@ -14,6 +14,7 @@ type BracketMatch = {
   awayTeam: Team;
   locked: boolean;
   prediction: { homeScore: number; awayScore: number } | null;
+  penaltyWinnerId: string | null;
 };
 
 // WC 2026 bracket — fixed by FIFA draw
@@ -61,6 +62,9 @@ function winner(m: BracketMatch | null): string | null {
   if (!m || m.homeScore === null || m.awayScore === null) return null;
   if (m.homeScore > m.awayScore) return m.homeTeam.name;
   if (m.awayScore > m.homeScore) return m.awayTeam.name;
+  // Draw: use penalty winner if set
+  if (m.penaltyWinnerId === m.homeTeam.id) return m.homeTeam.name;
+  if (m.penaltyWinnerId === m.awayTeam.id) return m.awayTeam.name;
   return null;
 }
 
@@ -392,6 +396,9 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
     if (!m || m.homeScore === null || m.awayScore === null) return null;
     if (m.homeScore > m.awayScore) return m.homeTeam;
     if (m.awayScore > m.homeScore) return m.awayTeam;
+    // Draw: use penalty winner if set
+    if (m.penaltyWinnerId === m.homeTeam.id) return m.homeTeam;
+    if (m.penaltyWinnerId === m.awayTeam.id) return m.awayTeam;
     return null;
   };
 
