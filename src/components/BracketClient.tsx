@@ -112,7 +112,7 @@ function MatchCard({
 
   return (
     <div
-      className={`rounded-xl border text-xs w-56 flex flex-col justify-center overflow-hidden ${
+      className={`rounded-xl border text-xs w-56 flex flex-col overflow-hidden ${
         played
           ? "bg-white/5 border-white/10"
           : match.locked
@@ -121,33 +121,34 @@ function MatchCard({
       }`}
       style={{ maxHeight: slotH - 8 }}
     >
-      <div className="px-2.5 pt-2 pb-0.5 flex items-center gap-1.5">
-        <span className="text-[9px] text-slate-600 font-medium flex-1 truncate">{fmtShort(match.scheduledAt)}</span>
-        {saving && <span className="text-[9px] text-slate-500 shrink-0">…</span>}
-        {saved && <span className="text-[9px] text-green-400 shrink-0">✓</span>}
-        {pts !== null && <PointsBadge pts={pts} stage={match.stage} />}
-        {played && (
-          <div className="flex gap-2 text-[8px] text-slate-600 uppercase tracking-wide shrink-0">
-            <span className="w-5 text-center">You</span>
-            <span className="w-5 text-center">Res</span>
-          </div>
-        )}
+      {/* Date row */}
+      <div className="px-2.5 pt-2 pb-1 flex items-center justify-between gap-2">
+        <span className="text-[9px] text-slate-500 font-medium truncate">{fmtShort(match.scheduledAt)}</span>
+        <div className="flex items-center gap-1 shrink-0">
+          {saving && <span className="text-[9px] text-slate-500">…</span>}
+          {saved && <span className="text-[9px] text-green-400">✓</span>}
+          {pts !== null && <PointsBadge pts={pts} stage={match.stage} />}
+        </div>
       </div>
 
-      {/* Home */}
-      <div className="flex items-center justify-between px-2.5 py-1.5 gap-1.5">
-        <div className={`flex items-center gap-1.5 flex-1 min-w-0 ${isWinnerHome ? "opacity-100" : played ? "opacity-40" : ""}`}>
+      {/* Column headers — only for played, right-aligned to match score columns */}
+      {played && (
+        <div className="px-2.5 pb-1 flex justify-end gap-2 text-[8px] text-slate-600 uppercase tracking-widest">
+          <span className="w-5 text-center">You</span>
+          <span className="w-5 text-center">Res</span>
+        </div>
+      )}
+
+      {/* Home row */}
+      <div className="flex items-center justify-between px-2.5 py-1.5 gap-1.5 border-t border-white/5">
+        <div className={`flex items-center gap-1.5 flex-1 min-w-0 transition-opacity ${isWinnerAway ? "opacity-35" : ""}`}>
           <span className="text-sm shrink-0">{match.homeTeam.flag}</span>
           <span className={`truncate font-medium ${isWinnerHome ? "text-white" : "text-slate-300"}`}>{match.homeTeam.name}</span>
         </div>
         {played ? (
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-500 w-5 text-center">
-              {match.prediction?.homeScore ?? "–"}
-            </span>
-            <span className={`font-bold text-base w-5 text-center ${isWinnerHome ? "text-white" : "text-slate-500"}`}>
-              {match.homeScore}
-            </span>
+            <span className="text-sm text-slate-500 w-5 text-center">{match.prediction?.homeScore ?? "–"}</span>
+            <span className={`text-sm font-bold w-5 text-center ${isWinnerHome ? "text-white" : "text-slate-400"}`}>{match.homeScore}</span>
           </div>
         ) : match.locked ? (
           <span className="text-slate-700 text-xs w-5 text-center shrink-0">–</span>
@@ -162,20 +163,16 @@ function MatchCard({
         )}
       </div>
 
-      {/* Away */}
-      <div className="flex items-center justify-between px-2.5 pb-1.5 gap-1.5 border-t border-white/5 pt-1.5">
-        <div className={`flex items-center gap-1.5 flex-1 min-w-0 ${isWinnerAway ? "opacity-100" : played ? "opacity-40" : ""}`}>
+      {/* Away row */}
+      <div className="flex items-center justify-between px-2.5 py-1.5 gap-1.5 border-t border-white/5">
+        <div className={`flex items-center gap-1.5 flex-1 min-w-0 transition-opacity ${isWinnerHome ? "opacity-35" : ""}`}>
           <span className="text-sm shrink-0">{match.awayTeam.flag}</span>
           <span className={`truncate font-medium ${isWinnerAway ? "text-white" : "text-slate-300"}`}>{match.awayTeam.name}</span>
         </div>
         {played ? (
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-500 w-5 text-center">
-              {match.prediction?.awayScore ?? "–"}
-            </span>
-            <span className={`font-bold text-base w-5 text-center ${isWinnerAway ? "text-white" : "text-slate-500"}`}>
-              {match.awayScore}
-            </span>
+            <span className="text-sm text-slate-500 w-5 text-center">{match.prediction?.awayScore ?? "–"}</span>
+            <span className={`text-sm font-bold w-5 text-center ${isWinnerAway ? "text-white" : "text-slate-400"}`}>{match.awayScore}</span>
           </div>
         ) : match.locked ? (
           <span className="text-slate-700 text-xs w-5 text-center shrink-0">–</span>
