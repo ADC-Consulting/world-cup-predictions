@@ -39,9 +39,13 @@ export async function advanceWinner(match: MatchWithTeams) {
   if (!["R32", "R16", "QF", "SF"].includes(match.stage)) return null;
   if (match.homeScore === null || match.awayScore === null) return null;
 
-  const matchTime = match.scheduledAt.toISOString();
-  const path = BRACKET_PATHS.find((p) => p.m1 === matchTime || p.m2 === matchTime);
+  const matchTs = match.scheduledAt.getTime();
+  const path = BRACKET_PATHS.find(
+    (p) => new Date(p.m1).getTime() === matchTs || new Date(p.m2).getTime() === matchTs
+  );
   if (!path) return null;
+
+  const isM1 = new Date(path.m1).getTime() === matchTs;
 
   // Determine this match's winner — draws require penaltyWinnerId
   let winnerId: string;
@@ -54,8 +58,7 @@ export async function advanceWinner(match: MatchWithTeams) {
     winnerId = match.penaltyWinnerId;
   }
 
-  const partnerTime = path.m1 === matchTime ? path.m2 : path.m1;
-  const isM1 = path.m1 === matchTime;
+  const partnerTime = isM1 ? path.m2 : path.m1;
 
   const partnerMatch = await prisma.match.findFirst({
     where: { scheduledAt: new Date(partnerTime) },

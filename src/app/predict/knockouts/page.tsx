@@ -29,11 +29,11 @@ async function ensureConfirmedMatchups() {
     where: { stage: { in: ["R32", "R16", "QF", "SF"] } },
   });
 
-  const byTime = new Map(allKnockout.map((m) => [m.scheduledAt.toISOString(), m]));
+  const byTime = new Map(allKnockout.map((m) => [m.scheduledAt.getTime(), m]));
 
   for (const path of BRACKET_PATHS) {
-    const m1 = byTime.get(path.m1);
-    const m2 = byTime.get(path.m2);
+    const m1 = byTime.get(new Date(path.m1).getTime());
+    const m2 = byTime.get(new Date(path.m2).getTime());
     if (!m1 || !m2) continue;
 
     const w1 = resolveWinnerId(m1);
