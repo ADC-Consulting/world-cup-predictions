@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { calculatePoints } from "@/lib/scoring";
+import { calculatePointsForStage } from "@/lib/scoring";
 
 export async function GET(
   req: NextRequest,
@@ -47,7 +47,7 @@ export async function GET(
     predHome: p.homeScore,
     predAway: p.awayScore,
     points: played
-      ? calculatePoints(p.homeScore, p.awayScore, match.homeScore!, match.awayScore!)
+      ? calculatePointsForStage(p.homeScore, p.awayScore, match.homeScore!, match.awayScore!, match.stage)
       : null,
   })).sort((a, b) => (b.points ?? -1) - (a.points ?? -1));
 

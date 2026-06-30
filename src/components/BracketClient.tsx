@@ -64,6 +64,94 @@ function winner(m: BracketMatch | null): string | null {
   return null;
 }
 
+type BreakdownData = {
+  locked: boolean;
+  homeTeam: { name: string; flag: string };
+  awayTeam: { name: string; flag: string };
+  homeScore?: number | null;
+  awayScore?: number | null;
+  totalPredictions: number;
+  totalUsers: number;
+  predictions: { name: string; predHome: number; predAway: number; points: number | null }[] | null;
+};
+
+function BreakdownModal({ matchId, onClose }: { matchId: string; onClose: () => void }) {
+  const [data, setData] = useState<BreakdownData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/matches/${matchId}/predictions`)
+      .then((r) => r.json())
+      .then((d) => { setData(d); setLoading(false); });
+  }, [matchId]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-[#0f1629] border border-white/15 rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+          {loading || !data ? (
+            <span className="text-slate-400 text-sm">Loading…</span>
+          ) : (
+            <div className="flex items-center gap-2 font-semibold text-sm flex-1 min-w-0">
+              <span className="text-base shrink-0">{data.homeTeam.flag}</span>
+              <span className="truncate">{data.homeTeam.name}</span>
+              {data.homeScore !== null && data.homeScore !== undefined ? (
+                <span className="text-amber-400 font-bold mx-1 shrink-0">{data.homeScore} – {data.awayScore}</span>
+              ) : (
+                <span className="text-slate-500 mx-1 shrink-0">vs</span>
+              )}
+              <span className="truncate">{data.awayTeam.name}</span>
+              <span className="text-base shrink-0">{data.awayTeam.flag}</span>
+            </div>
+          )}
+          <button onClick={onClose} className="text-slate-500 hover:text-white text-lg leading-none ml-3 shrink-0">✕</button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 px-5 py-4">
+          {loading && <div className="text-center py-8 text-slate-500 text-sm">Loading…</div>}
+
+          {!loading && data && !data.locked && (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-3">🔒</div>
+              <p className="text-slate-300 font-medium">Predictions hidden until kick-off</p>
+              <p className="text-slate-500 text-sm mt-1">{data.totalPredictions} of {data.totalUsers} people have predicted</p>
+              <div className="mt-4 bg-white/5 rounded-full h-2 overflow-hidden">
+                <div className="h-full bg-amber-500 rounded-full" style={{ width: `${data.totalUsers > 0 ? (data.totalPredictions / data.totalUsers) * 100 : 0}%` }} />
+              </div>
+            </div>
+          )}
+
+          {!loading && data && data.locked && data.predictions && (
+            <>
+              <p className="text-xs text-slate-500 mb-3">{data.totalPredictions} of {data.totalUsers} people predicted</p>
+              <div className="space-y-1.5">
+                {data.predictions.length === 0 && (
+                  <p className="text-center text-slate-500 text-sm py-4">No predictions for this match</p>
+                )}
+                {data.predictions.map((p, i) => (
+                  <div key={i} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-white/5 text-sm">
+                    <span className="font-medium flex-1 truncate">{p.name}</span>
+                    <span className="text-slate-300 font-mono font-bold shrink-0">{p.predHome} – {p.predAway}</span>
+                    <div className="w-8 text-right shrink-0">
+                      {p.points === null ? (
+                        <span className="text-xs text-slate-500">—</span>
+                      ) : p.points === 0 ? (
+                        <span className="text-xs font-semibold text-red-400">0</span>
+                      ) : (
+                        <span className="text-xs font-semibold text-amber-400">+{p.points}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PointsBadge({ pts, stage }: { pts: number; stage: string }) {
   const { exact } = stagePoints(stage);
   if (pts === exact) return <span className="text-[9px] font-bold text-green-400 bg-green-500/15 border border-green-500/30 rounded px-1">+{pts}</span>;
@@ -75,10 +163,12 @@ function MatchCard({
   match,
   slotH,
   onSaved,
+  onPeek,
 }: {
   match: BracketMatch;
   slotH: number;
   onSaved: (id: string, h: number, a: number) => void;
+  onPeek: () => void;
 }) {
   const [home, setHome] = useState(match.prediction?.homeScore?.toString() ?? "");
   const [away, setAway] = useState(match.prediction?.awayScore?.toString() ?? "");
@@ -124,10 +214,17 @@ function MatchCard({
       {/* Date row */}
       <div className="px-2.5 pt-2 pb-1 flex items-center justify-between gap-2">
         <span className="text-[9px] text-slate-500 font-medium truncate">{fmtShort(match.scheduledAt)}</span>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {saving && <span className="text-[9px] text-slate-500">…</span>}
           {saved && <span className="text-[9px] text-green-400">✓</span>}
           {pts !== null && <PointsBadge pts={pts} stage={match.stage} />}
+          {match.locked && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onPeek(); }}
+              title="See everyone's predictions"
+              className="text-slate-500 hover:text-amber-400 transition-colors leading-none text-sm"
+            >👥</button>
+          )}
         </div>
       </div>
 
@@ -260,6 +357,7 @@ function Slot({ h, children }: { h: number; children: React.ReactNode }) {
 
 export function BracketClient({ byStage }: { byStage: Record<string, BracketMatch[]> }) {
   const [matches, setMatches] = useState(byStage);
+  const [peekMatchId, setPeekMatchId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -380,7 +478,7 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
     stage: string,
   ) {
     return slot.match ? (
-      <MatchCard match={slot.match} slotH={slotH} onSaved={saved(stage)} />
+      <MatchCard match={slot.match} slotH={slotH} onSaved={saved(stage)} onPeek={() => setPeekMatchId(slot.match!.id)} />
     ) : (
       <TBDCard date={tbd_date} round={tbd_label} slotH={slotH} team1={slot.adv1} team2={slot.adv2} />
     );
@@ -394,7 +492,7 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
         {r32s.map((m, i) => (
           <Slot key={i} h={S}>
             {m ? (
-              <MatchCard match={m} slotH={S} onSaved={saved("R32")} />
+              <MatchCard match={m} slotH={S} onSaved={saved("R32")} onPeek={() => setPeekMatchId(m.id)} />
             ) : (
               <div className="w-52 h-16 rounded-xl border border-white/5 bg-white/3 flex items-center justify-center">
                 <span className="text-slate-700 text-xs">TBD</span>
@@ -471,6 +569,7 @@ export function BracketClient({ byStage }: { byStage: Record<string, BracketMatc
 
   return (
     <div>
+      {peekMatchId && <BreakdownModal matchId={peekMatchId} onClose={() => setPeekMatchId(null)} />}
       <PredictTabs />
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-amber-400">⚔️ Knockouts</h1>
