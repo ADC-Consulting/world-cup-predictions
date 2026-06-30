@@ -228,14 +228,6 @@ function MatchCard({
         </div>
       </div>
 
-      {/* Column headers — only for played, right-aligned to match score columns */}
-      {played && (
-        <div className="px-2.5 pb-1 flex justify-end gap-2 text-[8px] text-slate-600 uppercase tracking-widest">
-          <span className="w-5 text-center">You</span>
-          <span className="w-5 text-center">Res</span>
-        </div>
-      )}
-
       {/* Home row */}
       <div className="flex items-center justify-between px-2.5 py-1.5 gap-1.5 border-t border-white/5">
         <div className={`flex items-center gap-1.5 flex-1 min-w-0 transition-opacity ${isWinnerAway ? "opacity-35" : ""}`}>
@@ -243,7 +235,7 @@ function MatchCard({
           <span className={`truncate font-medium ${isWinnerHome ? "text-white" : "text-slate-300"}`}>{match.homeTeam.name}</span>
         </div>
         {played ? (
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0" style={{ fontVariantNumeric: "tabular-nums" }}>
             <span className="text-sm text-slate-500 w-5 text-center">{match.prediction?.homeScore ?? "–"}</span>
             <span className={`text-sm font-bold w-5 text-center ${isWinnerHome ? "text-white" : "text-slate-400"}`}>{match.homeScore}</span>
           </div>
@@ -267,7 +259,7 @@ function MatchCard({
           <span className={`truncate font-medium ${isWinnerAway ? "text-white" : "text-slate-300"}`}>{match.awayTeam.name}</span>
         </div>
         {played ? (
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0" style={{ fontVariantNumeric: "tabular-nums" }}>
             <span className="text-sm text-slate-500 w-5 text-center">{match.prediction?.awayScore ?? "–"}</span>
             <span className={`text-sm font-bold w-5 text-center ${isWinnerAway ? "text-white" : "text-slate-400"}`}>{match.awayScore}</span>
           </div>
