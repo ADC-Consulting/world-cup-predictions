@@ -121,12 +121,15 @@ function MatchCard({
       }`}
       style={{ maxHeight: slotH - 8 }}
     >
-      <div className="px-2.5 pt-2 flex items-center justify-between">
-        <span className="text-[9px] text-slate-600 font-medium">{fmtShort(match.scheduledAt)}</span>
+      <div className="px-2.5 pt-2 pb-0.5 flex items-center gap-1.5">
+        <span className="text-[9px] text-slate-600 font-medium flex-1 truncate">{fmtShort(match.scheduledAt)}</span>
+        {saving && <span className="text-[9px] text-slate-500 shrink-0">…</span>}
+        {saved && <span className="text-[9px] text-green-400 shrink-0">✓</span>}
+        {pts !== null && <PointsBadge pts={pts} stage={match.stage} />}
         {played && (
-          <div className="flex gap-2 text-[8px] text-slate-600 uppercase tracking-wide">
+          <div className="flex gap-2 text-[8px] text-slate-600 uppercase tracking-wide shrink-0">
             <span className="w-5 text-center">You</span>
-            <span className="w-5 text-center">Result</span>
+            <span className="w-5 text-center">Res</span>
           </div>
         )}
       </div>
@@ -187,14 +190,6 @@ function MatchCard({
         )}
       </div>
 
-      {/* Footer — points badge for played matches, save indicator while saving */}
-      {(pts !== null || saving || saved) && (
-        <div className="px-2.5 pb-1.5 flex items-center justify-end gap-1 border-t border-white/5 pt-1">
-          {saving && <span className="text-[9px] text-slate-500">…</span>}
-          {saved && <span className="text-[9px] text-green-400">✓</span>}
-          {pts !== null && <PointsBadge pts={pts} stage={match.stage} />}
-        </div>
-      )}
     </div>
   );
 }
