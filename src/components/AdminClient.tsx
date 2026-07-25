@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Flag } from "@/components/Flag";
+import { normalise } from "@/lib/scoring";
 
 const KNOCKOUT_STAGES = ["R32", "R16", "QF", "SF", "F"];
 
@@ -118,7 +119,7 @@ function MatchScoreRow({ match }: { match: Match }) {
   );
 }
 
-function TopScorerAdmin({ initialEntries }: { initialEntries: GoalEntry[] }) {
+function TopScorerAdmin({ initialEntries, onImported }: { initialEntries: GoalEntry[]; onImported?: (e: GoalEntry[]) => void }) {
   const [entries, setEntries] = useState<GoalEntry[]>(initialEntries);
   const [newName, setNewName] = useState("");
   const [newGoals, setNewGoals] = useState("");
@@ -136,7 +137,11 @@ function TopScorerAdmin({ initialEntries }: { initialEntries: GoalEntry[] }) {
         setImportMsg(`✅ Imported ${data.imported} entries — reload to see updated totals`);
         // Refresh entries from server
         const listRes = await fetch("/api/scores/top-scorers");
-        if (listRes.ok) setEntries(await listRes.json());
+        if (listRes.ok) {
+          const fresh = await listRes.json();
+          setEntries(fresh);
+          onImported?.(fresh);
+        }
       } else {
         setImportMsg(`❌ ${data.error}`);
       }
@@ -337,12 +342,13 @@ type PredRow = { userId: string; matchId: string; homeScore: number; awayScore: 
 type ChampRow = { userId: string; teamName: string; teamFlag: string };
 type TopRow = { userId: string; slot: number; playerName: string; position: string };
 
-function PredictionsTable({ matches, users, predictions, championPicks, topScorerPicks }: {
+function PredictionsTable({ matches, users, predictions, championPicks, topScorerPicks, goalEntries }: {
   matches: Match[];
   users: UserRow[];
   predictions: PredRow[];
   championPicks: ChampRow[];
   topScorerPicks: TopRow[];
+  goalEntries: GoalEntry[];
 }) {
   const [group, setGroup] = useState("all");
   const groups = ["all", ...Array.from(new Set(matches.map((m) => m.group))).sort()];
@@ -432,32 +438,73 @@ function PredictionsTable({ matches, users, predictions, championPicks, topScore
 
       {/* Top scorer picks */}
       <div className="mt-6">
-        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">👟 Top 5 Scorer Picks</h3>
+        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-1">👟 Top 5 Scorer Picks</h3>
+        {goalEntries.length === 0 && (
+          <p className="text-xs text-orange-400 mb-3">No goal data imported yet — go to Enter Results tab and click "Import 2026 Official Data" first.</p>
+        )}
         <div className="overflow-x-auto rounded-xl border border-white/10">
           <table className="text-xs w-full min-w-max">
             <thead>
               <tr className="border-b border-white/10 bg-white/5">
                 <th className="text-left px-3 py-2 text-slate-400">Player</th>
-                {[1,2,3,4,5].map((s) => <th key={s} className="px-3 py-2 text-slate-400 text-center">Pick {s}</th>)}
+                {[1,2,3,4,5].map((s) => <th key={s} className="px-3 py-2 text-slate-400 text-center min-w-32">Pick {s}</th>)}
+                <th className="px-3 py-2 text-slate-400 text-right">Pts</th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => {
-                const picks = topScorerPicks.filter((t) => t.userId === u.id);
+                const picks = topScorerPicks.filter((t) => t.userId === u.id).sort((a,b) => a.slot - b.slot);
+                const MULT: Record<string,number> = { DEFENDER: 1.5, MIDFIELDER: 1.0, FORWARD: 0.5 };
+                let totalPts = 0;
+                const pickCells = [1,2,3,4,5].map((s) => {
+                  const p = picks.find((t) => t.slot === s);
+                  if (!p) return <td key={s} className="px-3 py-2 text-center text-slate-600">—</td>;
+                  const entry = goalEntries.find((e) => normalise(e.playerName) === normalise(p.playerName));
+                  const matched = !!entry;
+                  const goals = entry?.goals ?? 0;
+                  const mult = MULT[p.position] ?? 0.5;
+                  const pts = goals * mult;
+                  totalPts += pts;
+                  const pos = p.position === "DEFENDER" ? "DEF" : p.position === "MIDFIELDER" ? "MID" : "FWD";
+                  const multLabel = p.position === "DEFENDER" ? "1.5×" : p.position === "MIDFIELDER" ? "1×" : "0.5×";
+                  return (
+                    <td key={s} className="px-3 py-2 text-center">
+                      <div className="flex flex-col items-center gap-0.5">
+                        <div className="flex items-center gap-1">
+                          {goalEntries.length > 0 && (
+                            matched
+                              ? <span className="text-green-400 font-bold">✓</span>
+                              : <span className="text-orange-400 font-bold" title={`"${p.playerName}" not found in scorer data`}>✗</span>
+                          )}
+                          <span className={matched ? "text-slate-200" : "text-slate-400"}>{p.playerName}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          {pos} {multLabel}
+                          {matched && goals > 0 && <span className="ml-1 text-green-400">{goals}g = +{pts % 1 === 0 ? pts : pts.toFixed(1)}</span>}
+                          {matched && goals === 0 && <span className="ml-1 text-slate-600">0 goals</span>}
+                        </div>
+                      </div>
+                    </td>
+                  );
+                });
                 return (
                   <tr key={u.id} className="border-b border-white/5 last:border-0">
                     <td className="px-3 py-2 font-medium text-slate-200">{u.name}</td>
-                    {[1,2,3,4,5].map((s) => {
-                      const p = picks.find((t) => t.slot === s);
-                      const pos = p?.position === "DEFENDER" ? "DEF" : p?.position === "MIDFIELDER" ? "MID" : "FWD";
-                      return <td key={s} className="px-3 py-2 text-center">{p ? <span>{p.playerName} <span className="text-slate-500">{pos}</span></span> : <span className="text-slate-600">—</span>}</td>;
-                    })}
+                    {pickCells}
+                    <td className="px-3 py-2 text-right font-bold text-green-400">
+                      {totalPts > 0 ? (totalPts % 1 === 0 ? `+${totalPts}` : `+${totalPts.toFixed(1)}`) : "—"}
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
+        {goalEntries.length > 0 && topScorerPicks.some(p => !goalEntries.find(e => normalise(e.playerName) === normalise(p.playerName))) && (
+          <p className="mt-2 text-xs text-orange-400">
+            ✗ = name not found in goal data. Add the player name manually in "Enter Results" → Top Scorer Goals (exact spelling as typed above).
+          </p>
+        )}
       </div>
     </div>
   );
@@ -514,6 +561,7 @@ export function AdminClient({ matches, initialGoalEntries, users, predictions, c
   topScorerPicks: TopRow[];
 }) {
   const [tab, setTab] = useState<"results" | "predictions" | "users">("results");
+  const [goalEntries, setGoalEntries] = useState<GoalEntry[]>(initialGoalEntries);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
   const now = new Date();
@@ -579,7 +627,7 @@ export function AdminClient({ matches, initialGoalEntries, users, predictions, c
       {tab === "results" ? (
         <>
           <SeedKnockoutButton />
-          <TopScorerAdmin initialEntries={initialGoalEntries} />
+          <TopScorerAdmin initialEntries={goalEntries} onImported={setGoalEntries} />
           {upcoming.length > 0 && (
             <section className="mb-8">
               <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">⏰ Awaiting result ({upcoming.length})</h2>
@@ -614,6 +662,7 @@ export function AdminClient({ matches, initialGoalEntries, users, predictions, c
           predictions={predictions}
           championPicks={championPicks}
           topScorerPicks={topScorerPicks}
+          goalEntries={goalEntries}
         />
       )}
     </div>
