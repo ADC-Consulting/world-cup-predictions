@@ -123,6 +123,29 @@ function TopScorerAdmin({ initialEntries }: { initialEntries: GoalEntry[] }) {
   const [newName, setNewName] = useState("");
   const [newGoals, setNewGoals] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState("");
+
+  async function importOfficialData() {
+    setImporting(true);
+    setImportMsg("");
+    try {
+      const res = await fetch("/api/admin/import-scorers", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setImportMsg(`✅ Imported ${data.imported} entries — reload to see updated totals`);
+        // Refresh entries from server
+        const listRes = await fetch("/api/scores/top-scorers");
+        if (listRes.ok) setEntries(await listRes.json());
+      } else {
+        setImportMsg(`❌ ${data.error}`);
+      }
+    } catch {
+      setImportMsg("❌ Network error");
+    } finally {
+      setImporting(false);
+    }
+  }
 
   async function upsert(playerName: string, goals: number, id?: string) {
     setSaving(id ?? "new");
@@ -156,11 +179,22 @@ function TopScorerAdmin({ initialEntries }: { initialEntries: GoalEntry[] }) {
 
   return (
     <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 mb-8">
-      <p className="text-amber-400 font-semibold mb-1">👟 Top Scorer Goals</p>
-      <p className="text-xs text-slate-400 mb-4">
-        Enter players and their goal tally (from Mon 15 Jun 23:59 CEST onwards).
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+        <p className="text-amber-400 font-semibold">👟 Top Scorer Goals</p>
+        <button
+          onClick={importOfficialData}
+          disabled={importing}
+          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black text-xs font-semibold rounded-lg transition-colors"
+        >
+          {importing ? "Importing…" : "⬇ Import 2026 Official Data"}
+        </button>
+      </div>
+      <p className="text-xs text-slate-400 mb-2">
         Points: FWD 0.5× · MID 1× · DEF 1.5× per goal. Matching is accent- and case-insensitive.
       </p>
+      {importMsg && (
+        <p className="text-xs mb-3 px-3 py-2 rounded-lg bg-white/5 text-slate-300">{importMsg}</p>
+      )}
 
       {entries.length > 0 && (
         <div className="space-y-1.5 mb-4">

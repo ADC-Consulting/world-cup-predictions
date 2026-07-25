@@ -17,6 +17,19 @@ async function getLeaderboard() {
     prisma.scorerGoalEntry.findMany(),
   ]);
 
+  // Determine World Cup champion from Final match result
+  const finalMatch = finishedMatches.find((m) => m.stage === "F");
+  let championTeamId: string | null = null;
+  if (finalMatch) {
+    if (finalMatch.homeScore! > finalMatch.awayScore!) {
+      championTeamId = finalMatch.homeTeamId;
+    } else if (finalMatch.awayScore! > finalMatch.homeScore!) {
+      championTeamId = finalMatch.awayTeamId;
+    } else {
+      championTeamId = finalMatch.penaltyWinnerId ?? null;
+    }
+  }
+
   return users.map((user) => {
     let pts = 0, exact = 0, correct = 0, predicted = 0;
     for (const match of finishedMatches) {
@@ -30,9 +43,10 @@ async function getLeaderboard() {
     }
 
     const champPick = championPicks.find((c) => c.userId === user.id);
+    const champBonus = championTeamId && champPick?.teamId === championTeamId ? 5 : 0;
     const userPicks = topScorerPicks.filter((p) => p.userId === user.id);
     const topScorerBonus = goalEntries.length > 0 ? scorerPoints(userPicks, goalEntries) : 0;
-    pts += topScorerBonus;
+    pts += champBonus + topScorerBonus;
 
     return {
       id: user.id,
@@ -42,6 +56,7 @@ async function getLeaderboard() {
       exact,
       correct,
       predicted,
+      champBonus,
       topScorerBonus,
       championTeam: champPick?.team ?? null,
     };
@@ -130,9 +145,12 @@ export default async function HomePage() {
                   </td>
                   <td className="px-4 py-3 text-right font-bold text-amber-400 text-lg">
                     {entry.pts % 1 === 0 ? entry.pts : entry.pts.toFixed(1)}
+                    {entry.champBonus > 0 && (
+                      <span className="ml-1 text-xs text-amber-300 font-normal" title="Champion bonus">+5🏆</span>
+                    )}
                     {entry.topScorerBonus > 0 && (
-                      <span className="ml-1 text-xs text-green-400 font-normal">
-                        +{entry.topScorerBonus % 1 === 0 ? entry.topScorerBonus : entry.topScorerBonus.toFixed(1)}
+                      <span className="ml-1 text-xs text-green-400 font-normal" title="Top scorer bonus">
+                        +{entry.topScorerBonus % 1 === 0 ? entry.topScorerBonus : entry.topScorerBonus.toFixed(1)}👟
                       </span>
                     )}
                   </td>
